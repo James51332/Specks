@@ -16,7 +16,14 @@ public:
   void Resize(float width, float height);
 
 private:
-  GLuint m_VAO, m_VBO, m_Shader;
+  void GenerateBuffers();
+  void GenerateShaders();
+
+  void DestroyBuffers();
+  void DestroyShaders();
+
+private:
+  GLuint m_VAO, m_VBO, m_IBO, m_Shader;
 
   float m_Width, m_Height;
 };
