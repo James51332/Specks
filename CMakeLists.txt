@@ -11,8 +11,11 @@ add_subdirectory(vendor/sdl2 EXCLUDE_FROM_ALL)
 set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Source Files
+file(GLOB_RECURSE SRC_FILES "src/*.cpp" "src/*.h")
+
 # Define the executable for the program
-add_executable(Specks src/main.cpp)
+add_executable(Specks ${SRC_FILES})
 
 # Link to the SDL library
 target_link_libraries(Specks PRIVATE SDL3::SDL3)
