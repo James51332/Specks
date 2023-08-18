@@ -22,19 +22,31 @@ const char* vertexShader = R"(
 
 layout (location = 0) in vec3 aPos;
 
+out vec3 vPos;
+
 void main()
 {
+  vPos = aPos;
   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
 })";
 
 const char* fragmentShader = R"(
 #version 330 core
 
+in vec3 vPos;
+
 out vec4 FragColor;
 
 void main()
 {
-    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+    float distance = sqrt(dot(vPos, vPos));
+    if (distance < 0.5)
+    {
+      FragColor = vec4(0.0f, 0.5f, 0.0f, 1.0f);
+    } else
+    {
+      FragColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    }
 })";
 
 Renderer::Renderer(float width, float height)
@@ -60,9 +72,11 @@ Renderer::~Renderer()
 
 void Renderer::Render()
 {
-  glClearColor(0.5f, 1.0f, 1.0f, 1.0f);
+  // Clear the screen
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
+  // Display the quad
   glUseProgram(m_Shader);
   glBindVertexArray(m_VAO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
