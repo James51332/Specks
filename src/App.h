@@ -1,10 +1,9 @@
 #pragma once
 
 #include <string>
+#include <SDL.h>
 
-#define GL_GLEXT_PROTOTYPES
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_opengl.h>
+#include "Renderer.h"
 
 namespace Speck
 {
@@ -19,9 +18,19 @@ public:
   void Run();
 
 private:
+  void Init(float w = 800, float h = 600);
+  void Shutdown();
+
+  void PollEvents();
+
+private:
   bool m_Running = false;
-  SDL_Window* m_Window;
-  SDL_GLContext m_Context;
+  std::string m_Name;
+
+  Renderer* m_Renderer = nullptr;
+
+  SDL_Window* m_Window = nullptr;
+  SDL_GLContext m_Context = nullptr;
 };
 
 }
