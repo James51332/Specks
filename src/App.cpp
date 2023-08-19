@@ -63,6 +63,7 @@ void App::Shutdown()
   delete m_Renderer;
   
   SDL_GL_DeleteContext(m_Context);
+  m_Context = nullptr;
   
   SDL_DestroyWindow(m_Window);
   m_Window = nullptr;

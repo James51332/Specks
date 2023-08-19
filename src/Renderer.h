@@ -24,6 +24,7 @@ private:
 
 private:
   GLuint m_VAO, m_VBO, m_IBO, m_Shader;
+  //GLuint m_InstancedBuffer;
 
   float m_Width, m_Height;
 };

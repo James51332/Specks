@@ -6,7 +6,7 @@
 namespace Speck
 {
 
-const float triangle[] = {
+const float quadVertices[] = {
   -0.5f, 0.5f, 0.0f,
   0.5f, 0.5f, 0.0f,
   0.5f, -0.5f, 0.0f,
@@ -24,10 +24,12 @@ layout (location = 0) in vec3 aPos;
 
 out vec3 vPos;
 
+uniform float uAspect;
+
 void main()
 {
   vPos = aPos;
-  gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+  gl_Position = vec4(aPos.x / uAspect, aPos.y, aPos.z, 1.0);
 })";
 
 const char* fragmentShader = R"(
@@ -39,13 +41,14 @@ out vec4 FragColor;
 
 void main()
 {
-    float distance = sqrt(dot(vPos, vPos));
-    if (distance < 0.5)
+    vec3 pos = vPos;
+    float distance = sqrt(dot(pos, pos));
+    if (distance < 0.1)
     {
-      FragColor = vec4(0.0f, 0.5f, 0.0f, 1.0f);
+      FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     } else
     {
-      FragColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+      FragColor = vec4(0.5f, 0.0f, 0.0f, 0.0f);
     }
 })";
 
@@ -76,8 +79,12 @@ void Renderer::Render()
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
-  // Display the quad
+  // Use the shader
+  GLuint uniform = glGetUniformLocation(m_Shader, "uAspect");
+  glUniform1f(uniform, (m_Width / m_Height));
   glUseProgram(m_Shader);
+
+  // Display the quad
   glBindVertexArray(m_VAO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
   glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, nullptr);
@@ -95,7 +102,7 @@ void Renderer::GenerateBuffers()
   // Create our vertex buffer
   glGenBuffers(1, &m_VBO);
   glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle), triangle, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Create our index buffer
@@ -103,6 +110,13 @@ void Renderer::GenerateBuffers()
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+  //// Create our instanced buffer
+  //constexpr std::size_t maxInstances = 10000;
+  //constexpr std::size_t bytesPerInstance = 8; // for now, we'll just have an x and y pos
+  //glGenBuffers(1, &m_InstancedBuffer);
+  //glBindBuffer(GL_ARRAY_BUFFER, m_InstancedBuffer);
+  //glBufferData(GL_ARRAY_BUFFER, maxInstances * bytesPerInstance, nullptr, GL_DYNAMIC_DRAW);
 
   // Create our vertex array
   glGenVertexArrays(1, &m_VAO);
