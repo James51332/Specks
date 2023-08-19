@@ -7,6 +7,7 @@ set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_subdirectory(vendor/sdl2 EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/glad EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/glm EXCLUDE_FROM_ALL)
 
 # Set the C++ Standard
 set (CMAKE_CXX_STANDARD 20)
@@ -19,4 +20,4 @@ file(GLOB_RECURSE SRC_FILES "src/*.cpp" "src/*.h")
 add_executable(Specks ${SRC_FILES})
 
 # Link to the SDL library
-target_link_libraries(Specks PRIVATE SDL3::SDL3 glad)
+target_link_libraries(Specks PRIVATE SDL3::SDL3 glad glm::glm)

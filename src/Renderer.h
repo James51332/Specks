@@ -2,6 +2,8 @@
 
 #include <glad/glad.h>
 
+#include "Camera.h"
+
 namespace Speck
 {
 
@@ -25,6 +27,8 @@ private:
 private:
   GLuint m_VAO, m_VBO, m_IBO, m_Shader;
   //GLuint m_InstancedBuffer;
+
+  Camera m_Camera;
 
   float m_Width, m_Height;
 };

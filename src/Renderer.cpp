@@ -6,54 +6,55 @@
 namespace Speck
 {
 
-const float quadVertices[] = {
-  -0.5f, 0.5f, 0.0f,
-  0.5f, 0.5f, 0.0f,
-  0.5f, -0.5f, 0.0f,
-  -0.5f, -0.5f, 0.0f
+constexpr static float quadVertices[] = {
+  -1.0f, 1.0f, 0.0f,
+  1.0f, 1.0f, 0.0f,
+  1.0f, -1.0f, 0.0f,
+  -1.0f, -1.0f, 0.0f
 };
 
-const uint32_t indices[] = {
+constexpr static uint16_t indices[] = {
   0, 1, 2, 0, 2, 3
 };
 
 const char* vertexShader = R"(
 #version 330 core
 
-layout (location = 0) in vec3 aPos;
+layout (location = 0) in vec3 a_Position;
 
-out vec3 vPos;
+out vec2 v_Pos;
 
-uniform float uAspect;
+uniform mat4 u_ViewProjection;
 
 void main()
-{
-  vPos = aPos;
-  gl_Position = vec4(aPos.x / uAspect, aPos.y, aPos.z, 1.0);
+{  
+  gl_Position = u_ViewProjection * vec4(a_Position, 1.0f);
+  v_Pos = a_Position.xy;
 })";
 
 const char* fragmentShader = R"(
 #version 330 core
 
-in vec3 vPos;
+in vec2 v_Pos;
 
 out vec4 FragColor;
 
 void main()
 {
-    vec3 pos = vPos;
-    float distance = sqrt(dot(pos, pos));
-    if (distance < 0.1)
+    float distance = sqrt(dot(v_Pos, v_Pos));
+    float radius = 1.0f;
+
+    if (distance < radius)
     {
       FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     } else
     {
-      FragColor = vec4(0.5f, 0.0f, 0.0f, 0.0f);
+      FragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     }
 })";
 
 Renderer::Renderer(float width, float height)
-  : m_Width(width), m_Height(height)
+  : m_Width(width), m_Height(height), m_Camera(m_Width / m_Height, 1.0f)
 {
   // Load OpenGL function pointers
   gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
@@ -79,21 +80,24 @@ void Renderer::Render()
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
-  // Use the shader
-  GLuint uniform = glGetUniformLocation(m_Shader, "uAspect");
-  glUniform1f(uniform, (m_Width / m_Height));
+  // Upload the camera matrix and use the shader program
+  GLint uniform = glGetUniformLocation(m_Shader, "u_ViewProjection");
+  glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_Camera.GetViewProjectionMatrix()[0][0]);
   glUseProgram(m_Shader);
 
   // Display the quad
   glBindVertexArray(m_VAO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
-  glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, nullptr);
+  glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_SHORT, nullptr);
 }
 
 void Renderer::Resize(float width, float height)
 {
   m_Width = width;
   m_Height = height;
+
+  m_Camera.SetAspect(m_Width / m_Height);
+
   glViewport(0, 0, width, height);
 }
 
