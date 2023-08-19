@@ -13,6 +13,7 @@ public:
   Renderer(float width, float height);
   ~Renderer();
 
+  void Update();
   void Render();
 
   void Resize(float width, float height);

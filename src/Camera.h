@@ -16,6 +16,9 @@ public:
   Camera(float aspect, float size = 5.0f);
   // ~Camera();// No need to destroy any resources
 
+  // Updates the camera based on user input
+  void Update();
+  
   void SetPosition(const glm::vec3& position);
   void SetRotation(float rotation);
   void SetOrthographicSize(float size);
@@ -23,7 +26,7 @@ public:
 
   const glm::vec3& GetPosition() const { return m_Position; }
   float GetRotation() const { return m_Rotation; }
-  float GetOrthographicSize() const { m_OrthographicSize; }
+  float GetOrthographicSize() const { return m_OrthographicSize; }
   float GetAspect() const { return m_Aspect; }
 
   const glm::mat4& GetViewMatrix() const { return m_View; }

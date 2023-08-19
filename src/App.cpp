@@ -1,5 +1,7 @@
 #include "App.h"
 
+#include "Input.h"
+
 namespace Speck
 {
 
@@ -33,6 +35,8 @@ void App::Run()
   {
     PollEvents();
 
+    m_Renderer->Update();
+    
     m_Renderer->Render();
     SDL_GL_SwapWindow(m_Window);
   }
@@ -55,10 +59,13 @@ void App::Init(float w, float h)
 
   // Initialize the renderer
   m_Renderer = new Renderer(w, h);
+  
+  // Initialize the input manager
+  Input::Init();
 }
 
 void App::Shutdown()
-{
+{  
   // Destroy the app's resources
   delete m_Renderer;
   
@@ -71,6 +78,9 @@ void App::Shutdown()
 
 void App::PollEvents()
 {
+  // Set the input manager to a new frame
+  Input::Update();
+  
   SDL_Event event;
   while (SDL_PollEvent(&event))
   {
@@ -84,6 +94,36 @@ void App::PollEvents()
       case SDL_EVENT_QUIT:
       {
         Stop();
+        break;
+      }
+      case SDL_EVENT_KEY_DOWN:
+      {
+        Input::SetKeyDown(event.key.keysym.scancode);
+        break;
+      }
+      case SDL_EVENT_KEY_UP:
+      {
+        Input::SetKeyUp(event.key.keysym.scancode);
+        break;
+      }
+      case SDL_EVENT_MOUSE_BUTTON_DOWN:
+      {
+        Input::SetMouseDown(event.button.button);
+        break;
+      }
+      case SDL_EVENT_MOUSE_BUTTON_UP:
+      {
+        Input::SetMouseUp(event.button.button);
+        break;
+      }
+      case SDL_EVENT_MOUSE_MOTION:
+      {
+        Input::SetMousePos(event.motion.x, event.motion.y);
+        break;
+      }
+      case SDL_EVENT_MOUSE_WHEEL:
+      {
+        Input::SetScrollDelta(event.wheel.x, event.wheel.y);
         break;
       }
       default: break;

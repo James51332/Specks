@@ -1,6 +1,6 @@
 #include "Renderer.h"
 
-#include <SDL3/SDL.h>
+#include <SDL.h>
 #include <iostream>
 
 namespace Speck
@@ -41,20 +41,21 @@ out vec4 FragColor;
 
 void main()
 {
-    float distance = sqrt(dot(v_Pos, v_Pos));
-    float radius = 1.0f;
+  float distance = sqrt(dot(v_Pos, v_Pos));
+  float radius = 1.0f;
 
-    if (distance < radius)
-    {
-      FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    } else
-    {
-      FragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    }
+  if (distance < radius)
+  {
+    FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+  }
+  else
+  {
+    FragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+  }
 })";
 
 Renderer::Renderer(float width, float height)
-  : m_Width(width), m_Height(height), m_Camera(m_Width / m_Height, 1.0f)
+  : m_Width(width), m_Height(height), m_Camera(m_Width / m_Height)
 {
   // Load OpenGL function pointers
   gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
@@ -72,6 +73,11 @@ Renderer::~Renderer()
   // Destroy rendering objects
   DestroyBuffers();
   DestroyShaders();
+}
+
+void Renderer::Update()
+{
+  m_Camera.Update();
 }
 
 void Renderer::Render()

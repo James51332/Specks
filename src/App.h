@@ -22,7 +22,7 @@ private:
   void Shutdown();
 
   void PollEvents();
-
+  
 private:
   bool m_Running = false;
   std::string m_Name;
