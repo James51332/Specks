@@ -203,6 +203,7 @@ void Renderer::GenerateShaders()
 void Renderer::DestroyBuffers()
 {
   glDeleteBuffers(1, &m_VBO);
+  glDeleteBuffers(1, &m_InstancedBuffer);
   glDeleteBuffers(1, &m_IBO);
   glDeleteVertexArrays(1, &m_VAO);
 }
