@@ -3,6 +3,8 @@
 #include <SDL.h>
 #include <iostream>
 
+#include "Input.h"
+
 namespace Speck
 {
 
@@ -56,7 +58,7 @@ void main()
 })";
 
 Renderer::Renderer(float width, float height)
-  : m_Width(width), m_Height(height), m_Camera(width / height)
+  : m_Width(width), m_Height(height), m_Camera(width, height)
 {
   // Load OpenGL function pointers
   gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
@@ -80,6 +82,12 @@ void Renderer::Update()
 {
   // Update the camera's position and rotation based on user input
   m_Camera.Update();
+  
+  if (Input::MousePress(SDL_BUTTON_LEFT))
+  {
+    glm::vec2 mousePos = m_Camera.GetMouseInWorldSpace();
+    std::cout << "Mouse Pressed: (x: " << mousePos.x << ", y: " << mousePos.y << ")" << std::endl;
+  }
 }
 
 void Renderer::Render()
@@ -109,7 +117,7 @@ void Renderer::Resize(float width, float height)
   m_Width = width;
   m_Height = height;
 
-  m_Camera.SetAspect(m_Width / m_Height);
+  m_Camera.SetWindowSize(m_Width, m_Height);
 
   glViewport(0, 0, width, height);
 }

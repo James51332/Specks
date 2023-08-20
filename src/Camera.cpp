@@ -2,14 +2,15 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <SDL.h>
+#include <iostream>
 
 #include "Input.h"
 
 namespace Speck
 {
 
-Camera::Camera(float aspect, float size)
-  : m_Aspect(aspect), m_OrthographicSize(size)
+Camera::Camera(float windowWidth, float windowHeight, float size)
+  : m_WindowSize(windowWidth, windowHeight), m_Aspect(windowWidth / windowHeight), m_OrthographicSize(size)
 {
   CalculateMatrices();
 }
@@ -84,10 +85,27 @@ void Camera::SetOrthographicSize(float size)
   CalculateMatrices();
 }
 
-void Camera::SetAspect(float aspect)
+void Camera::SetWindowSize(float windowWidth, float windowHeight)
 {
-  m_Aspect = aspect;
+  m_WindowSize = { windowWidth, windowHeight };
+  m_Aspect = windowWidth / windowHeight;
   CalculateMatrices();
+}
+
+glm::vec2 Camera::GetMouseInWorldSpace() const
+{
+  // To convert from screen space to world space we'll need to undo all
+  // of the transformations that happen in the rendering pipeline.
+  // Step 1) We convert from pixels to OpenGL's coordinates (-1 to 1 on x and y axes)
+  glm::vec2 mouseCoordinates = { Input::GetMouseX(), m_WindowSize.y - Input::GetMouseY() }; // (0, width); (0, height)
+  mouseCoordinates = { (mouseCoordinates.x  / m_WindowSize.x), (mouseCoordinates.y / m_WindowSize.y) }; // (0, 1); (0, 1)
+  mouseCoordinates = 2.0f * mouseCoordinates - 1.0f; // (-1, 1); (-1, 1)
+  
+  // Step 2) We multiply by the inverse of the view projection matrix (need a glm::vec4 to do this)
+  glm::vec4 mouseCoord4 = { mouseCoordinates.x, mouseCoordinates.y, 0.0f, 1.0f };
+  mouseCoord4 = m_ViewProjectionInverse * mouseCoord4;
+  
+  return { mouseCoord4.x, mouseCoord4.y };
 }
 
 void Camera::CalculateMatrices()
@@ -109,6 +127,9 @@ void Camera::CalculateMatrices()
 
   // Cache the view projection matrix in a variable as well (first view then projection-translate then stretch)
   m_ViewProjection = m_Projection * m_View;
+  
+  // We 
+  m_ViewProjectionInverse = glm::inverse(m_ViewProjection);
 }
 
 }
