@@ -27,7 +27,7 @@ private:
 
 private:
   GLuint m_VAO, m_VBO, m_IBO, m_Shader;
-  //GLuint m_InstancedBuffer;
+  GLuint m_InstancedBuffer;
 
   Camera m_Camera;
 

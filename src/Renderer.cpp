@@ -21,6 +21,7 @@ const char* vertexShader = R"(
 #version 330 core
 
 layout (location = 0) in vec3 a_Position;
+layout (location = 1) in vec2 a_InstancePosition;
 
 out vec2 v_Pos;
 
@@ -28,7 +29,7 @@ uniform mat4 u_ViewProjection;
 
 void main()
 {  
-  gl_Position = u_ViewProjection * vec4(a_Position, 1.0f);
+  gl_Position = u_ViewProjection * vec4(a_Position.xy + a_InstancePosition, 0.0f, 1.0f);
   v_Pos = a_Position.xy;
 })";
 
@@ -90,11 +91,16 @@ void Renderer::Render()
   GLint uniform = glGetUniformLocation(m_Shader, "u_ViewProjection");
   glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_Camera.GetViewProjectionMatrix()[0][0]);
   glUseProgram(m_Shader);
+  
+  // Update the instance buffer to hold each position (this will be dynamic based on specks in the future)
+  float instanceData[] = { 0.0f, 0.0f, 2.0f, 2.0f };
+  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedBuffer);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(instanceData), instanceData);
 
   // Display the quad
   glBindVertexArray(m_VAO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
-  glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_SHORT, nullptr);
+  glDrawElementsInstanced(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_SHORT, nullptr, 2);
 }
 
 void Renderer::Resize(float width, float height)
@@ -112,7 +118,7 @@ void Renderer::GenerateBuffers()
   // Create our vertex buffer
   glGenBuffers(1, &m_VBO);
   glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_DYNAMIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Create our index buffer
@@ -121,23 +127,28 @@ void Renderer::GenerateBuffers()
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-  //// Create our instanced buffer
-  //constexpr std::size_t maxInstances = 10000;
-  //constexpr std::size_t bytesPerInstance = 8; // for now, we'll just have an x and y pos
-  //glGenBuffers(1, &m_InstancedBuffer);
-  //glBindBuffer(GL_ARRAY_BUFFER, m_InstancedBuffer);
-  //glBufferData(GL_ARRAY_BUFFER, maxInstances * bytesPerInstance, nullptr, GL_DYNAMIC_DRAW);
+  // Create our instanced buffer
+  constexpr std::size_t maxInstances = 10000;
+  constexpr std::size_t bytesPerInstance = 8; // for now, we'll just have an x and y pos per instance
+  glGenBuffers(1, &m_InstancedBuffer);
+  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedBuffer);
+  glBufferData(GL_ARRAY_BUFFER, maxInstances * bytesPerInstance, nullptr, GL_DYNAMIC_DRAW);
 
   // Create our vertex array
   glGenVertexArrays(1, &m_VAO);
   glBindVertexArray(m_VAO);
 
-  // Attach our vbo to our vao
+  // Attach our vbo to our vao and define the vertex layout
   glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-
-  // Define the vertex layout
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
+  
+  // Attach our index buffer and define the layout and increment
+  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedBuffer);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(1);
+  glVertexAttribDivisor(1, 1); // step to the next buffer for each vertex
+
 }
 
 void Renderer::GenerateShaders()
