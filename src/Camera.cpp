@@ -62,6 +62,23 @@ void Camera::Update()
     shouldUpdateMatrices = true;
   }
   
+  // Handle panning
+  static glm::vec2 lastMousePos;
+  if (Input::MousePress(SDL_BUTTON_LEFT)) // Begin panning
+  {
+    lastMousePos = GetMouseInWorldSpace();
+  }
+  else if (Input::MouseDown(SDL_BUTTON_LEFT)) // Update panning
+  {
+    glm::vec2 curMousePos = GetMouseInWorldSpace();
+    glm::vec2 delta = curMousePos - lastMousePos;
+    lastMousePos = curMousePos - delta; // update our old mouse position to new coordinates
+    
+    m_Position.x -= delta.x;
+    m_Position.y -= delta.y;
+    shouldUpdateMatrices = true;
+  }
+  
   // Recalculate matrices as needed
   if (shouldUpdateMatrices)
     CalculateMatrices();

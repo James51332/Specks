@@ -82,12 +82,6 @@ void Renderer::Update()
 {
   // Update the camera's position and rotation based on user input
   m_Camera.Update();
-  
-  if (Input::MousePress(SDL_BUTTON_LEFT))
-  {
-    glm::vec2 mousePos = m_Camera.GetMouseInWorldSpace();
-    std::cout << "Mouse Pressed: (x: " << mousePos.x << ", y: " << mousePos.y << ")" << std::endl;
-  }
 }
 
 void Renderer::Render()
