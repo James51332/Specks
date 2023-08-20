@@ -79,6 +79,37 @@ void Camera::Update()
     shouldUpdateMatrices = true;
   }
   
+  // Handle zooming (scrolling for now--pinch zoom in the future?)
+  float scroll = Input::GetScrollY();
+  if (scroll != 0)
+  {
+    // TODO: Zoom speed based on scroll speed? (using exponentiation)
+    float zoomSize = 1.0f;
+    if (scroll > 0)
+      zoomSize = 0.9f;
+    else if (scroll < 0)
+      zoomSize = 1.1f;
+    
+    // Scale the camera
+    m_OrthographicSize *= zoomSize;
+    
+    glm::vec2 zoomPos = GetMouseInWorldSpace(); // lock in around this point
+    glm::vec2 camPos = { m_Position.x, m_Position.y };
+    
+    // This distance must stay the same in screen space to keep the mouse focused
+    // around the same point in world space. Thus, it must be scaled proportionally
+    // to orthographic size, and we do this by moving the camera the same proportion
+    // of this distance as the orthographic size is scaled. If we make this line 3x
+    // bigger by zooming in to 0.333x, then we must move along 66.7% of this line so that
+    // the distance stays the same.
+    glm::vec2 delta = zoomPos - camPos;
+    glm::vec2 camDelta = (1.0f - zoomSize) * delta;
+
+    m_Position.x += camDelta.x;
+    m_Position.y += camDelta.y;
+    shouldUpdateMatrices = true;
+  }
+  
   // Recalculate matrices as needed
   if (shouldUpdateMatrices)
     CalculateMatrices();

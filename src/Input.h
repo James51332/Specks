@@ -15,8 +15,8 @@ public:
   static float GetMouseX() { return s_MouseX; }
   static float GetMouseY() { return s_MouseY; }
   
-  static int GetScrollX() { return s_ScrollDeltaX; }
-  static int GetScrollY() { return s_ScrollDeltaY; }
+  static float GetScrollX() { return s_ScrollDeltaX; }
+  static float GetScrollY() { return s_ScrollDeltaY; }
   
   static bool MousePress(int btn) { return s_MouseButtons[btn] && !s_MouseButtonsLast[btn]; }
   static bool MouseDown(int btn) { return s_MouseButtons[btn]; }
