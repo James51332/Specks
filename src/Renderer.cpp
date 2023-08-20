@@ -144,11 +144,7 @@ void Renderer::GenerateBuffers()
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
   
-<<<<<<< HEAD
   // Attach our instanced buffer and define the layout and increment
-=======
-  // Attach our index buffer and define the layout and increment
->>>>>>> ebcf735a7341a2275ef91c217c2f37759d881f27
   glBindBuffer(GL_ARRAY_BUFFER, m_InstancedBuffer);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(1);
