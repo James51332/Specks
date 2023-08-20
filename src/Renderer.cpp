@@ -18,7 +18,7 @@ constexpr static uint16_t indices[] = {
 };
 
 const char* vertexShader = R"(
-#version 330 core
+#version 410 core
 
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec2 a_InstancePosition;
@@ -34,7 +34,7 @@ void main()
 })";
 
 const char* fragmentShader = R"(
-#version 330 core
+#version 410 core
 
 in vec2 v_Pos;
 
