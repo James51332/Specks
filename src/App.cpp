@@ -55,8 +55,13 @@ void App::Init(float w, float h)
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  
   m_Context = SDL_GL_CreateContext(m_Window);
-
+  SDL_GL_MakeCurrent(m_Window, m_Context);
+  
+  // Disable VSync
+  SDL_GL_SetSwapInterval(0);
+  
   // Initialize the renderer
   m_Renderer = new Renderer(w, h);
   

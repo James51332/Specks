@@ -43,7 +43,7 @@ out vec4 FragColor;
 void main()
 {
   float distance2 = dot(v_Pos, v_Pos);
-  float radius2 = 1.0f; (r = 1)
+  float radius2 = 1.0f; // (r = 1)
 
   if (distance2 < radius2)
   {
@@ -56,7 +56,7 @@ void main()
 })";
 
 Renderer::Renderer(float width, float height)
-  : m_Width(width), m_Height(height), m_Camera(m_Width / m_Height)
+  : m_Width(width), m_Height(height), m_Camera(width / height)
 {
   // Load OpenGL function pointers
   gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
@@ -149,7 +149,6 @@ void Renderer::GenerateBuffers()
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(1);
   glVertexAttribDivisor(1, 1); // step to the next buffer for each vertex
-
 }
 
 void Renderer::GenerateShaders()
