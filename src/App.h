@@ -4,6 +4,7 @@
 #include <SDL.h>
 
 #include "Renderer.h"
+#include "Camera.h"
 #include "System.h"
 
 namespace Speck
@@ -29,6 +30,7 @@ private:
   std::string m_Name;
 
   Renderer* m_Renderer = nullptr;
+  Camera* m_Camera = nullptr;
   System* m_System = nullptr;
 
   SDL_Window* m_Window = nullptr;

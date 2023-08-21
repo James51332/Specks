@@ -37,14 +37,14 @@ void App::Run()
   {
     PollEvents();
 
-    m_Renderer->UpdateCamera();
     m_System->Update();
+    m_Camera->Update();
     
     // Clear the screen
     glClearColor(0.2f, 0.2f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    m_Renderer->BeginFrame();
+    m_Renderer->BeginFrame(m_Camera);
     m_Renderer->DrawParticles(m_System->GetParticlePositions());
     m_Renderer->EndFrame();
     
@@ -79,6 +79,7 @@ void App::Init(float w, float h)
   
   // Initialize the renderer
   m_Renderer = new Renderer(w, h);
+  m_Camera = new Camera(w, h, 25.0f);
   
   // Initialize the input manager
   Input::Init();
@@ -90,6 +91,7 @@ void App::Init(float w, float h)
 void App::Shutdown()
 {
   // Destroy the app's resources
+  delete m_Camera;
   delete m_System;
   delete m_Renderer;
   

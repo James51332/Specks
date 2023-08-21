@@ -6,8 +6,6 @@ namespace Speck
 {
 
 /// Orthographic camera class to be used with particle shader.
-/// 
-/// TODO: Add a controller system that allows the user to move the camera with WASD, as well as the mouse.
 class Camera
 {
 public:

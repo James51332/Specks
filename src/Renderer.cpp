@@ -58,7 +58,7 @@ void main()
 })";
 
 Renderer::Renderer(float width, float height)
-  : m_Width(width), m_Height(height), m_Camera(width, height, 25.0f)
+  : m_Width(width), m_Height(height)
 {
   // Load OpenGL function pointers
   gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
@@ -82,16 +82,10 @@ Renderer::~Renderer()
   DestroyShaders();
 }
 
-void Renderer::UpdateCamera()
-{
-  // Update the camera's position and rotation based on user input
-  m_Camera.Update();
-}
-
-void Renderer::BeginFrame()
+void Renderer::BeginFrame(Camera* camera)
 {
   m_InFrame = true;
-  m_Particles = 0;
+  m_Camera = camera;
 }
 
 void Renderer::DrawParticle(float x, float y)
@@ -126,14 +120,16 @@ void Renderer::DrawParticles(const std::vector<glm::vec2>& particles)
 void Renderer::EndFrame()
 {
   Flush();
+  
   m_InFrame = false;
+  m_Camera = nullptr;
 }
 
 void Renderer::Flush()
 {
   // Upload the camera matrix and use the shader program
   GLint uniform = glGetUniformLocation(m_Shader, "u_ViewProjection");
-  glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_Camera.GetViewProjectionMatrix()[0][0]);
+  glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_Camera->GetViewProjectionMatrix()[0][0]);
   glUseProgram(m_Shader);
   
   // Copy the instanced buffer to the instanced vbo
@@ -153,8 +149,6 @@ void Renderer::Resize(float width, float height)
 {
   m_Width = width;
   m_Height = height;
-
-  m_Camera.SetWindowSize(m_Width, m_Height);
 
   glViewport(0, 0, width, height);
 }
