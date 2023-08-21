@@ -53,12 +53,12 @@ void main()
   }
   else
   {
-    FragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    FragColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
   }
 })";
 
 Renderer::Renderer(float width, float height)
-  : m_Width(width), m_Height(height), m_Camera(width, height)
+  : m_Width(width), m_Height(height), m_Camera(width, height, 25.0f)
 {
   // Load OpenGL function pointers
   gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
@@ -69,6 +69,10 @@ Renderer::Renderer(float width, float height)
 
   // Resize the viewport (no need to use Resize() because we've already done everything else it does)
   glViewport(0, 0, width, height);
+  
+  // Enable Blending and Depth Testing
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 Renderer::~Renderer()
@@ -86,11 +90,6 @@ void Renderer::UpdateCamera()
 
 void Renderer::BeginFrame()
 {
-  // Clear the screen
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
-  
-  // Begin
   m_InFrame = true;
   m_Particles = 0;
 }

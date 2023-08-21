@@ -1,5 +1,7 @@
 #include "App.h"
 
+#include <glad/glad.h>
+
 #include "Input.h"
 
 namespace Speck
@@ -37,13 +39,17 @@ void App::Run()
 
     m_Renderer->UpdateCamera();
     
+    // Clear the screen
+    glClearColor(0.2f, 0.2f, 0.25f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
     // TEMP: Draw a bunch of particles manually.
     m_Renderer->BeginFrame();
     {
     	m_Renderer->DrawParticle(2.0f, 2.0f);
     	m_Renderer->DrawParticle(0.0f, 0.0f);
     	m_Renderer->DrawParticle(5.0f, -2.0f);
-    	m_Renderer->DrawParticle(0.0f, 3.0f);
+    	m_Renderer->DrawParticle(1.0f, 2.0f);
     }
     m_Renderer->EndFrame();
     
