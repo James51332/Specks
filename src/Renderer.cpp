@@ -78,32 +78,56 @@ Renderer::~Renderer()
   DestroyShaders();
 }
 
-void Renderer::Update()
+void Renderer::UpdateCamera()
 {
   // Update the camera's position and rotation based on user input
   m_Camera.Update();
 }
 
-void Renderer::Render()
+void Renderer::BeginFrame()
 {
   // Clear the screen
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
+  
+  // Begin
+  m_InFrame = true;
+  m_Particles = 0;
+}
 
+void Renderer::DrawParticle(float x, float y)
+{
+  if (m_Particles == m_MaxParticles)
+    Flush();
+  
+  m_InstancedBuffer[m_Particles] = glm::vec2(x, y);
+  m_Particles++;
+}
+
+void Renderer::EndFrame()
+{
+  Flush();
+  m_InFrame = false;
+}
+
+void Renderer::Flush()
+{
   // Upload the camera matrix and use the shader program
   GLint uniform = glGetUniformLocation(m_Shader, "u_ViewProjection");
   glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_Camera.GetViewProjectionMatrix()[0][0]);
   glUseProgram(m_Shader);
   
-  // Update the instance buffer to hold each position (this will be dynamic based on specks in the future)
-  float instanceData[] = { 0.0f, 0.0f, 2.0f, 2.0f };
-  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedBuffer);
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(instanceData), instanceData);
-
+  // Copy the instanced buffer to the instanced vbo
+  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec2) * m_Particles, m_InstancedBuffer);
+  
   // Display the instances
   glBindVertexArray(m_VAO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
-  glDrawElementsInstanced(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_SHORT, nullptr, 2);
+  glDrawElementsInstanced(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_SHORT, nullptr, m_Particles);
+  
+  // Reset the particle count
+  m_Particles = 0;
 }
 
 void Renderer::Resize(float width, float height)
@@ -130,12 +154,14 @@ void Renderer::GenerateBuffers()
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-  // Create our instanced buffer
-  constexpr std::size_t maxInstances = 10000;
-  constexpr std::size_t bytesPerInstance = 8; // for now, we'll just have an x and y pos per instance
-  glGenBuffers(1, &m_InstancedBuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedBuffer);
-  glBufferData(GL_ARRAY_BUFFER, maxInstances * bytesPerInstance, nullptr, GL_DYNAMIC_DRAW);
+  // Create our instanced vbo
+  constexpr std::size_t bytesPerInstance = sizeof(glm::vec2); // for now, we'll just have an x and y pos per instance
+  glGenBuffers(1, &m_InstancedVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
+  glBufferData(GL_ARRAY_BUFFER, m_MaxParticles * bytesPerInstance, nullptr, GL_DYNAMIC_DRAW);
+  
+  // Allocate the buffer we write to
+  m_InstancedBuffer = new glm::vec2[m_MaxParticles];
 
   // Create our vertex array
   glGenVertexArrays(1, &m_VAO);
@@ -147,7 +173,7 @@ void Renderer::GenerateBuffers()
   glEnableVertexAttribArray(0);
   
   // Attach our instanced buffer and define the layout and increment
-  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedBuffer);
+  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(1);
   glVertexAttribDivisor(1, 1); // step to the next buffer for each vertex
@@ -204,7 +230,8 @@ void Renderer::GenerateShaders()
 void Renderer::DestroyBuffers()
 {
   glDeleteBuffers(1, &m_VBO);
-  glDeleteBuffers(1, &m_InstancedBuffer);
+  glDeleteBuffers(1, &m_InstancedVBO);
+  delete[] m_InstancedBuffer;
   glDeleteBuffers(1, &m_IBO);
   glDeleteVertexArrays(1, &m_VAO);
 }

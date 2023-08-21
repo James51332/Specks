@@ -35,9 +35,18 @@ void App::Run()
   {
     PollEvents();
 
-    m_Renderer->Update();
+    m_Renderer->UpdateCamera();
     
-    m_Renderer->Render();
+    // TEMP: Draw a bunch of particles manually.
+    m_Renderer->BeginFrame();
+    {
+    	m_Renderer->DrawParticle(2.0f, 2.0f);
+    	m_Renderer->DrawParticle(0.0f, 0.0f);
+    	m_Renderer->DrawParticle(5.0f, -2.0f);
+    	m_Renderer->DrawParticle(0.0f, 3.0f);
+    }
+    m_Renderer->EndFrame();
+    
     SDL_GL_SwapWindow(m_Window);
   }
 
