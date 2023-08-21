@@ -103,6 +103,26 @@ void Renderer::DrawParticle(float x, float y)
   m_Particles++;
 }
 
+void Renderer::DrawParticles(const std::vector<glm::vec2>& particles)
+{
+  std::size_t num = particles.size();
+  if (m_Particles + num >= m_MaxParticles)
+    Flush();
+  
+  if (num <= m_MaxParticles)
+  {
+    std::memcpy(m_InstancedBuffer + m_Particles, particles.data(), sizeof(glm::vec2) * num);
+    m_Particles += num;
+  } else
+  {
+    // The buffer will be flushed if we reach this path.
+    std::size_t batchSize = 10000; // Fit as many as we can in the batch
+    std::memcpy(m_InstancedBuffer , particles.data(), sizeof(glm::vec2) * 10000);
+    num -= batchSize;
+    Flush();
+  }
+}
+
 void Renderer::EndFrame()
 {
   Flush();

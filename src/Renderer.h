@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <glad/glad.h>
 
 #include "Camera.h"
@@ -16,8 +17,10 @@ public:
   void UpdateCamera();
   
   void BeginFrame();
-  void DrawParticle(float x, float y);
   void EndFrame();
+  
+  void DrawParticle(float x, float y);
+  void DrawParticles(const std::vector<glm::vec2>& particles);
 
   void Resize(float width, float height);
 

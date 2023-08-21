@@ -38,19 +38,14 @@ void App::Run()
     PollEvents();
 
     m_Renderer->UpdateCamera();
+    m_System->Update();
     
     // Clear the screen
     glClearColor(0.2f, 0.2f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    // TEMP: Draw a bunch of particles manually.
     m_Renderer->BeginFrame();
-    {
-    	m_Renderer->DrawParticle(2.0f, 2.0f);
-    	m_Renderer->DrawParticle(0.0f, 0.0f);
-    	m_Renderer->DrawParticle(5.0f, -2.0f);
-    	m_Renderer->DrawParticle(1.0f, 2.0f);
-    }
+    m_Renderer->DrawParticles(m_System->GetParticlePositions());
     m_Renderer->EndFrame();
     
     SDL_GL_SwapWindow(m_Window);
@@ -87,11 +82,15 @@ void App::Init(float w, float h)
   
   // Initialize the input manager
   Input::Init();
+  
+  // Setup the particle system
+  m_System = new System();
 }
 
 void App::Shutdown()
-{  
+{
   // Destroy the app's resources
+  delete m_System;
   delete m_Renderer;
   
   SDL_GL_DeleteContext(m_Context);
