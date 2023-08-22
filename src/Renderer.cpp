@@ -9,43 +9,55 @@
 namespace Speck
 {
 
-constexpr static float quadVertices[] = {
-  -1.0f, 1.0f, 0.0f,
-  1.0f, 1.0f, 0.0f,
-  1.0f, -1.0f, 0.0f,
-  -1.0f, -1.0f, 0.0f
+struct QuadVertex
+{
+  glm::vec3 Position;
+  glm::vec2 UV;
 };
 
-constexpr static uint16_t indices[] = {
+struct InstanceVertex
+{
+  glm::vec2 Position;
+};
+
+constexpr static QuadVertex quadVertices[] = {
+  {{-1.0f,  1.0f, 0.0f}, {0.0f, 1.0f}},
+  {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
+  {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
+  {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}
+};
+
+constexpr static uint16_t quadIndices[] = {
   0, 1, 2, 0, 2, 3
 };
 
-const char* vertexShader = R"(
+const char* particleVertex = R"(
 #version 410 core
 
 layout (location = 0) in vec3 a_Position;
-layout (location = 1) in vec2 a_InstancePosition;
+layout (location = 1) in vec2 a_UV;
+layout (location = 2) in vec2 a_InstancePosition;
 
-out vec2 v_UV;
+out vec2 v_UVNorm;
 
 uniform mat4 u_ViewProjection;
 
 void main()
 {  
   gl_Position = u_ViewProjection * vec4(a_Position.xy + a_InstancePosition, 0.0f, 1.0f);
-  v_UV = a_Position.xy;
+  v_UVNorm = a_UV * 2.0f - 1.0f;
 })";
 
-const char* fragmentShader = R"(
+const char* particleFragment = R"(
 #version 410 core
 
-in vec2 v_UV;
+in vec2 v_UVNorm;
 
 out vec4 FragColor;
 
 void main()
 {
-  float dist = distance(vec2(0.0f), v_UV);
+  float dist = distance(vec2(0.0f), v_UVNorm);
   float radius = 1.0f;
 
 	float col = step(dist, radius);
@@ -54,20 +66,7 @@ void main()
 	FragColor = vec4(col, col, col, alpha);
 })";
 
-struct QuadVertex
-{
-  glm::vec3 Position;
-  glm::vec2 UV;
-};
-
-QuadVertex backgroundVertices[] = {
-  {{-1.0f,  1.0f, 0.0f}, {0.0f, 1.0f}},
-  {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
-  {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
-  {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}
-};
-
-const char* quadVertexShader = R"(
+const char* backgroundVertex = R"(
 #version 410 core
 
 layout (location = 0) in vec3 a_Pos;
@@ -84,7 +83,7 @@ void main()
 	gl_Position = u_ViewProjection * u_Transform * vec4(a_Pos, 1.0);
 })";
 
-const char* quadFragmentShader = R"(
+const char* backgroundFragment = R"(
 #version 410 core
 
 in vec2 v_UV;
@@ -104,6 +103,7 @@ Renderer::Renderer(float width, float height, float displayScale)
 
   // Init OpenGL objects
   GenerateBuffers();
+  GenerateArrays();
   GenerateShaders();
 
   // Resize the viewport (no need to use Resize() because we've already done everything else it does)
@@ -118,6 +118,7 @@ Renderer::~Renderer()
 {
   // Destroy rendering objects
   DestroyBuffers();
+  DestroyArrays();
   DestroyShaders();
 }
 
@@ -126,18 +127,17 @@ void Renderer::BeginFrame(Camera* camera)
   m_InFrame = true;
   m_Camera = camera;
   
-  glUseProgram(m_QuadShader);
-  
-  GLuint uniform = glGetUniformLocation(m_QuadShader, "u_ViewProjection");
+  glUseProgram(m_BackgroundShader);
+  GLuint uniform = glGetUniformLocation(m_BackgroundShader, "u_ViewProjection");
   glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_Camera->GetViewProjectionMatrix()[0][0]);
   
-  uniform = glGetUniformLocation(m_QuadShader, "u_Transform");
+  uniform = glGetUniformLocation(m_BackgroundShader, "u_Transform");
   glm::mat4 transform = glm::scale(glm::mat4(1.0f), glm::vec3(50.0f, 50.0f, 50.0f));
   glUniformMatrix4fv(uniform, 1, GL_FALSE, &transform[0][0]);
   
-  glBindVertexArray(m_QuadVAO);
+  glBindVertexArray(m_BackgroundVAO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIBO);
-  glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_SHORT, nullptr);
+  glDrawElements(GL_TRIANGLES, sizeof(quadIndices) / sizeof(quadIndices[0]), GL_UNSIGNED_SHORT, nullptr);
 }
 
 void Renderer::DrawParticle(float x, float y)
@@ -180,8 +180,8 @@ void Renderer::EndFrame()
 void Renderer::Flush()
 {
   // Upload the camera matrix and use the shader program
-  glUseProgram(m_Shader);
-  GLint uniform = glGetUniformLocation(m_Shader, "u_ViewProjection");
+  glUseProgram(m_ParticleShader);
+  GLint uniform = glGetUniformLocation(m_ParticleShader, "u_ViewProjection");
   glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_Camera->GetViewProjectionMatrix()[0][0]);
   
   // Copy the instanced buffer to the instanced vbo
@@ -190,8 +190,8 @@ void Renderer::Flush()
   
   // Display the instances
   glBindVertexArray(m_ParticleVAO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
-  glDrawElementsInstanced(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_SHORT, nullptr, m_Particles);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIBO);
+  glDrawElementsInstanced(GL_TRIANGLES, sizeof(quadIndices) / sizeof(quadIndices[0]), GL_UNSIGNED_SHORT, nullptr, m_Particles);
   
   // Reset the particle count
   m_Particles = 0;
@@ -207,79 +207,83 @@ void Renderer::Resize(float width, float height)
 
 void Renderer::GenerateBuffers()
 {
-  // Create our vertex buffer
-  glGenBuffers(1, &m_VBO);
-  glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  // Create our quad vertex buffer and index buffer
+  {
+  	glGenBuffers(1, &m_QuadVBO);
+  	glBindBuffer(GL_ARRAY_BUFFER, m_QuadVBO);
+  	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+  	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  // Create our index buffer
-  glGenBuffers(1, &m_IBO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  	glGenBuffers(1, &m_QuadIBO);
+  	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIBO);
+  	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
+  	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  }
 
-  // Create our instanced vbo
-  constexpr std::size_t bytesPerInstance = sizeof(glm::vec2); // for now, we'll just have an x and y pos per instance
-  glGenBuffers(1, &m_InstancedVBO);
-  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
-  glBufferData(GL_ARRAY_BUFFER, m_MaxParticles * bytesPerInstance, nullptr, GL_DYNAMIC_DRAW);
-  
-  // Allocate the buffer we write to
-  m_InstancedBuffer = new glm::vec2[m_MaxParticles];
+  // Create our particle instance vertex buffer
+  {
+  	glGenBuffers(1, &m_InstancedVBO);
+  	glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
+  	glBufferData(GL_ARRAY_BUFFER, m_MaxParticles * sizeof(InstanceVertex), nullptr, GL_DYNAMIC_DRAW);
+  	glBindBuffer(GL_ARRAY_BUFFER, 0);
+  	
+  	// Allocate the cpu buffer that we'll write to and copy from
+  	m_InstancedBuffer = new glm::vec2[m_MaxParticles];
+	}
+}
 
-  // Create our vertex array
-  glGenVertexArrays(1, &m_ParticleVAO);
-  glBindVertexArray(m_ParticleVAO);
-
-  // Attach our vbo to our vao and define the vertex layout
-  glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(0);
+void Renderer::GenerateArrays()
+{
+  // Create our particle vertex array
+  {
+    glGenVertexArrays(1, &m_ParticleVAO);
+    glBindVertexArray(m_ParticleVAO);
+    
+    // Attach our vbo to our vao and define the vertex layout
+    glBindBuffer(GL_ARRAY_BUFFER, m_QuadVBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)sizeof(glm::vec3));
+    glEnableVertexAttribArray(1);
+    
+    // Attach our instanced buffer and define the layout and increment
+    glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(InstanceVertex), (void*)0);
+    glEnableVertexAttribArray(2);
+    glVertexAttribDivisor(2, 1);
+    
+    // Unbind our vao
+    glBindVertexArray(0);
+  }
   
-  // Attach our instanced buffer and define the layout and increment
-  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(1);
-  glVertexAttribDivisor(1, 1); // step to the next buffer for each vertex
-  
-  // Unbind our vao
-  glBindVertexArray(0);
-  
-  // Create our background vertex buffer and index buffer
-  glGenBuffers(1, &m_QuadVBO);
-  glBindBuffer(GL_ARRAY_BUFFER, m_QuadVBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(backgroundVertices), backgroundVertices, GL_STATIC_DRAW);
-  
-  glGenBuffers(1, &m_QuadIBO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-  
-  // Create our background vao
-  glGenVertexArrays(1, &m_QuadVAO);
-  glBindVertexArray(m_QuadVAO);
-  
-  // Attach our vbo to vao and define the layout
-  glBindBuffer(GL_ARRAY_BUFFER, m_QuadVBO);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (const void*)0);
-  glEnableVertexAttribArray(0);
-  
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (const void*)sizeof(glm::vec3));
-  glEnableVertexAttribArray(1);
+  // Create our background vertex array
+  {
+    glGenVertexArrays(1, &m_BackgroundVAO);
+    glBindVertexArray(m_BackgroundVAO);
+    
+    // Attach our vbo to vao and define the layout
+    glBindBuffer(GL_ARRAY_BUFFER, m_QuadVBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (const void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (const void*)sizeof(glm::vec3));
+    glEnableVertexAttribArray(1);
+    
+    // Unbind
+    glBindVertexArray(0);
+  }
 }
 
 void Renderer::GenerateShaders()
 {
-  // Build the vertex and fragment shaders for particles
+  // Build the particle shader program
   {
-  	GLuint vs, fs;
-
+    GLuint vs, fs;
   	vs = glCreateShader(GL_VERTEX_SHADER);
-  	glShaderSource(vs, 1, &vertexShader, nullptr);
+  	glShaderSource(vs, 1, &particleVertex, nullptr);
   	glCompileShader(vs);
 
   	fs = glCreateShader(GL_FRAGMENT_SHADER);
-  	glShaderSource(fs, 1, &fragmentShader, nullptr);
+  	glShaderSource(fs, 1, &particleFragment, nullptr);
   	glCompileShader(fs);
 
   	// Check for success
@@ -300,15 +304,15 @@ void Renderer::GenerateShaders()
   	}
 
   	// Combine the shaders into a program and link it
-  	m_Shader = glCreateProgram();
-  	glAttachShader(m_Shader, vs);
-  	glAttachShader(m_Shader, fs);
-  	glLinkProgram(m_Shader);
+  	m_ParticleShader = glCreateProgram();
+  	glAttachShader(m_ParticleShader, vs);
+  	glAttachShader(m_ParticleShader, fs);
+  	glLinkProgram(m_ParticleShader);
 
   	// Check for success
-  	glGetProgramiv(m_Shader, GL_LINK_STATUS, &success);
+  	glGetProgramiv(m_ParticleShader, GL_LINK_STATUS, &success);
   	if (!success) {
-  	  glGetProgramInfoLog(m_Shader, 512, NULL, infoLog);
+  	  glGetProgramInfoLog(m_ParticleShader, 512, NULL, infoLog);
   	  std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
   	}
 
@@ -317,16 +321,16 @@ void Renderer::GenerateShaders()
   	glDeleteShader(fs);
   }
   
-  // Now create our quad shader
+  // Now create our background shader
   {
     GLuint vs, fs;
     
     vs = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vs, 1, &quadVertexShader, nullptr);
+    glShaderSource(vs, 1, &backgroundVertex, nullptr);
     glCompileShader(vs);
     
     fs = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fs, 1, &quadFragmentShader, nullptr);
+    glShaderSource(fs, 1, &backgroundFragment, nullptr);
     glCompileShader(fs);
     
     // Check for success
@@ -347,15 +351,15 @@ void Renderer::GenerateShaders()
     }
     
     // Combine the shaders into a program and link it
-    m_QuadShader = glCreateProgram();
-    glAttachShader(m_QuadShader, vs);
-    glAttachShader(m_QuadShader, fs);
-    glLinkProgram(m_QuadShader);
+    m_BackgroundShader = glCreateProgram();
+    glAttachShader(m_BackgroundShader, vs);
+    glAttachShader(m_BackgroundShader, fs);
+    glLinkProgram(m_BackgroundShader);
     
     // Check for success
-    glGetProgramiv(m_QuadShader, GL_LINK_STATUS, &success);
+    glGetProgramiv(m_BackgroundShader, GL_LINK_STATUS, &success);
     if (!success) {
-      glGetProgramInfoLog(m_QuadShader, 512, NULL, infoLog);
+      glGetProgramInfoLog(m_BackgroundShader, 512, NULL, infoLog);
       std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
     
@@ -367,16 +371,23 @@ void Renderer::GenerateShaders()
 
 void Renderer::DestroyBuffers()
 {
-  glDeleteBuffers(1, &m_VBO);
+  glDeleteBuffers(1, &m_QuadVBO);
+  glDeleteBuffers(1, &m_QuadIBO);
+  
   glDeleteBuffers(1, &m_InstancedVBO);
   delete[] m_InstancedBuffer;
-  glDeleteBuffers(1, &m_IBO);
+}
+
+void Renderer::DestroyArrays()
+{
   glDeleteVertexArrays(1, &m_ParticleVAO);
+  glDeleteVertexArrays(1, &m_BackgroundVAO);
 }
 
 void Renderer::DestroyShaders()
 {
-  glDeleteProgram(m_Shader);
+  glDeleteProgram(m_ParticleShader);
+  glDeleteProgram(m_BackgroundShader);
 }
 
 }

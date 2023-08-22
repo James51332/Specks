@@ -26,25 +26,27 @@ private:
   void Flush();
   
   void GenerateBuffers();
+  void GenerateArrays();
   void GenerateShaders();
 
   void DestroyBuffers();
+  void DestroyArrays();
   void DestroyShaders();
 
 private:
-  // Particle Rendering Data
-  GLuint m_ParticleVAO, m_VBO, m_IBO, m_Shader;
+  // General Rendering Data
+  GLuint m_QuadVBO, m_QuadIBO;
+  GLuint m_ParticleVAO, m_BackgroundVAO;
+  GLuint m_ParticleShader, m_BackgroundShader;
+  
+  // Particle Instacning Data
   GLuint m_InstancedVBO;
   glm::vec2* m_InstancedBuffer;
   std::size_t m_Particles = 0, m_MaxParticles = 10000;
   
-  // Background Rendering Data
-  GLuint m_QuadVAO, m_QuadVBO, m_QuadIBO, m_QuadShader;
-  
   // General Rendering Data
   bool m_InFrame = false;
   Camera* m_Camera = nullptr;
-  
   float m_PixelDensity = 1.0f;
   float m_Width, m_Height;
 };
