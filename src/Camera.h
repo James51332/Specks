@@ -32,6 +32,12 @@ public:
   const glm::mat4& GetViewProjectionMatrix() const { return m_ViewProjection; }
 
 private:
+  // Return true when matrices need to be recalculated
+  bool HandleMoving(float timestep);
+  bool HandlePanning(float timestep);
+  bool HandleZooming(float timestep);
+  
+private:
   void CalculateMatrices();
 private:
   glm::vec3 m_Position = glm::vec3(0.0f);

@@ -26,89 +26,9 @@ void Camera::Update()
   // Store whether we've moved so we don't wastefully calculate matrices
   bool shouldUpdateMatrices = false;
   
-  // Handle moving with WASD
-  float moveSpeed = m_OrthographicSize * 1.5f;
-  if (Input::KeyDown(SDL_SCANCODE_W))
-  {
-    m_Position.y += moveSpeed * timestep;
-    shouldUpdateMatrices = true;
-  }
-  if (Input::KeyDown(SDL_SCANCODE_A))
-  {
-    m_Position.x -= moveSpeed * timestep;
-    shouldUpdateMatrices = true;
-  }
-  if (Input::KeyDown(SDL_SCANCODE_S))
-  {
-    m_Position.y -= moveSpeed * timestep;
-    shouldUpdateMatrices = true;
-  }
-  if (Input::KeyDown(SDL_SCANCODE_D))
-  {
-    m_Position.x += moveSpeed * timestep;
-    shouldUpdateMatrices = true;
-  }
-  
-  // Handle rotation
-  float rotationSpeed = 200.0f;
-  if (Input::KeyDown(SDL_SCANCODE_LEFT))
-  {
-    m_Rotation += rotationSpeed * timestep;
-    shouldUpdateMatrices = true;
-  }
-  if (Input::KeyDown(SDL_SCANCODE_RIGHT))
-  {
-    m_Rotation -= rotationSpeed * timestep;
-    shouldUpdateMatrices = true;
-  }
-  
-  // Handle panning
-  static glm::vec2 lastMousePos;
-  if (Input::MousePress(SDL_BUTTON_LEFT)) // Begin panning
-  {
-    lastMousePos = GetMouseInWorldSpace();
-  }
-  else if (Input::MouseDown(SDL_BUTTON_LEFT)) // Update panning
-  {
-    glm::vec2 curMousePos = GetMouseInWorldSpace();
-    glm::vec2 delta = curMousePos - lastMousePos;
-    lastMousePos = curMousePos - delta; // update our old mouse position to new coordinates
-    
-    m_Position.x -= delta.x;
-    m_Position.y -= delta.y;
-    shouldUpdateMatrices = true;
-  }
-  
-  // Handle zooming (scrolling for now--pinch zoom in the future?)
-  float scroll = Input::GetScrollY();
-  if (scroll != 0)
-  {
-    // TODO: Zoom speed based on scroll speed? (using exponentiation)
-    float zoomSize = 1.0f;
-    if (scroll > 0)
-      zoomSize = 0.9f;
-    else if (scroll < 0)
-      zoomSize = 1.1f;
-    
-    // Scale the camera
-    m_OrthographicSize *= zoomSize;
-    
-    glm::vec2 zoomPos = GetMouseInWorldSpace(); // lock in around this point
-    glm::vec2 camPos = { m_Position.x, m_Position.y };
-    
-    // This distance must stay the same in screen space to keep the mouse focused
-    // around the same point in world space. Thus, it must be scaled proportionally
-    // to orthographic size, and we do this by moving the camera the same proportion
-    // of this distance as the orthographic size is scaled. If we make this line 3x
-    // bigger by zooming in to 0.333x, then we must move along 66.7% of this line so that
-    // the distance stays the same.
-    glm::vec2 delta = zoomPos - camPos;
-    glm::vec2 camDelta = (1.0f - zoomSize) * delta;
-
-    m_Position.x += camDelta.x;
-    m_Position.y += camDelta.y;
-    shouldUpdateMatrices = true;
-  }
+  shouldUpdateMatrices |= HandleMoving(timestep);
+  shouldUpdateMatrices |= HandlePanning(timestep);
+  shouldUpdateMatrices |= HandleZooming(timestep);
   
   // Recalculate matrices as needed
   if (shouldUpdateMatrices)
@@ -156,6 +76,106 @@ glm::vec2 Camera::GetMouseInWorldSpace() const
   return { mouseCoord4.x, mouseCoord4.y };
 }
 
+bool Camera::HandleMoving(float timestep)
+{
+  bool shouldUpdateMatrices = false;
+  
+  // Handling sliding with WASD (TODO: Camera right vs World right?)
+  float moveSpeed = m_OrthographicSize * 1.5f;
+  if (Input::KeyDown(SDL_SCANCODE_W))
+  {
+    m_Position.y += moveSpeed * timestep;
+    shouldUpdateMatrices = true;
+  }
+  if (Input::KeyDown(SDL_SCANCODE_A))
+  {
+    m_Position.x -= moveSpeed * timestep;
+    shouldUpdateMatrices = true;
+  }
+  if (Input::KeyDown(SDL_SCANCODE_S))
+  {
+    m_Position.y -= moveSpeed * timestep;
+    shouldUpdateMatrices = true;
+  }
+  if (Input::KeyDown(SDL_SCANCODE_D))
+  {
+    m_Position.x += moveSpeed * timestep;
+    shouldUpdateMatrices = true;
+  }
+  
+  // Handle rotation
+  float rotationSpeed = 200.0f;
+  if (Input::KeyDown(SDL_SCANCODE_LEFT))
+  {
+    m_Rotation += rotationSpeed * timestep;
+    shouldUpdateMatrices = true;
+  }
+  if (Input::KeyDown(SDL_SCANCODE_RIGHT))
+  {
+    m_Rotation -= rotationSpeed * timestep;
+    shouldUpdateMatrices = true;
+  }
+  
+  return shouldUpdateMatrices;
+}
+
+bool Camera::HandlePanning(float timestep)
+{
+  static glm::vec2 lastMousePos;
+  if (Input::MousePress(SDL_BUTTON_LEFT)) // Begin panning
+  {
+    lastMousePos = GetMouseInWorldSpace();
+  }
+  else if (Input::MouseDown(SDL_BUTTON_LEFT)) // Update panning
+  {
+    glm::vec2 curMousePos = GetMouseInWorldSpace();
+    glm::vec2 delta = curMousePos - lastMousePos;
+    lastMousePos = curMousePos - delta; // update our old mouse position to new coordinates
+    
+    m_Position.x -= delta.x;
+    m_Position.y -= delta.y;
+    return true;
+  }
+  
+  return false;
+}
+
+bool Camera::HandleZooming(float timestep)
+{
+  // Scrolling zoom for now (TODO: pinch zoom in the future?)
+  float scroll = Input::GetScrollY();
+  if (scroll != 0)
+  {
+    // TODO: Zoom speed based on scroll speed? (using exponentiation)
+    float zoomSize = 1.0f;
+    if (scroll > 0)
+      zoomSize = 0.9f;
+    else if (scroll < 0)
+      zoomSize = 1.1f;
+    
+    // Scale the camera
+    m_OrthographicSize *= zoomSize;
+    
+    glm::vec2 zoomPos = GetMouseInWorldSpace(); // lock in around this point
+    glm::vec2 camPos = { m_Position.x, m_Position.y };
+    
+    // This distance must stay the same in screen space to keep the mouse focused
+    // around the same point in world space. Thus, it must be scaled proportionally
+    // to orthographic size, and we do this by moving the camera the same proportion
+    // of this distance as the orthographic size is scaled. If we make this line 3x
+    // bigger by zooming in to 0.333x, then we must move along 66.7% of this line so that
+    // the distance stays the same.
+    glm::vec2 delta = zoomPos - camPos;
+    glm::vec2 camDelta = (1.0f - zoomSize) * delta;
+    
+    m_Position.x += camDelta.x;
+    m_Position.y += camDelta.y;
+    return true;
+  }
+  
+  return false;
+}
+
 void Camera::CalculateMatrices()
 {
   // Calculate the view matrix (translates from world space to camera space-inverse of camera's transform)
@@ -176,7 +196,7 @@ void Camera::CalculateMatrices()
   // Cache the view projection matrix in a variable as well (first view then projection-translate then stretch)
   m_ViewProjection = m_Projection * m_View;
   
-  // We 
+  // We cache this for converting from normalized space to world space.
   m_ViewProjectionInverse = glm::inverse(m_ViewProjection);
 }
 
