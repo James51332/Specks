@@ -1,5 +1,6 @@
 #include "App.h"
 
+#include <iostream>
 #include <glad/glad.h>
 
 #include "Input.h"
@@ -58,18 +59,14 @@ void App::Run()
 void App::Init(float w, float h)
 {
   // Create the window for the app
-  m_Window = SDL_CreateWindow(m_Name.c_str(), w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+  m_Window = SDL_CreateWindow(m_Name.c_str(), w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
   // Get our OpenGL surface to draw on
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-  
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  
-  SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-  SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
   
   m_Context = SDL_GL_CreateContext(m_Window);
   SDL_GL_MakeCurrent(m_Window, m_Context);
@@ -78,7 +75,8 @@ void App::Init(float w, float h)
   SDL_GL_SetSwapInterval(0);
   
   // Initialize the renderer
-  m_Renderer = new Renderer(w, h);
+  float displayScale = SDL_GetWindowDisplayScale(m_Window);
+  m_Renderer = new Renderer(w, h, displayScale);
   m_Camera = new Camera(w, h, 25.0f);
   
   // Initialize the input manager

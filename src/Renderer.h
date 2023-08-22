@@ -11,7 +11,7 @@ namespace Speck
 class Renderer
 {
 public:
-  Renderer(float width, float height);
+  Renderer(float width, float height, float displayScale = 1.0f);
   ~Renderer();
   
   void BeginFrame(Camera* camera);
@@ -44,6 +44,8 @@ private:
   // General Rendering Data
   bool m_InFrame = false;
   Camera* m_Camera = nullptr;
+  
+  float m_PixelDensity = 1.0f;
   float m_Width, m_Height;
 };
 

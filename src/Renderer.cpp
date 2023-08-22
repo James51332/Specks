@@ -26,31 +26,31 @@ const char* vertexShader = R"(
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec2 a_InstancePosition;
 
-out vec2 v_Pos;
+out vec2 v_UV;
 
 uniform mat4 u_ViewProjection;
 
 void main()
 {  
   gl_Position = u_ViewProjection * vec4(a_Position.xy + a_InstancePosition, 0.0f, 1.0f);
-  v_Pos = a_Position.xy;
+  v_UV = a_Position.xy;
 })";
 
 const char* fragmentShader = R"(
 #version 410 core
 
-in vec2 v_Pos;
+in vec2 v_UV;
 
 out vec4 FragColor;
 
 void main()
 {
-  float distance = sqrt(dot(v_Pos, v_Pos));
-  float radius = 1.0f; // (r = 1)
+  float dist = distance(vec2(0.0f), v_UV);
+  float radius = 1.0f;
 
-	float col = step(distance, radius);
-	float delta = fwidth(distance);
-	float alpha = smoothstep(radius + delta, radius - delta, distance);
+	float col = step(dist, radius);
+	float delta = fwidth(dist);
+	float alpha = smoothstep(radius + delta, radius - delta, dist);
 	FragColor = vec4(col, col, col, alpha);
 })";
 
@@ -96,8 +96,8 @@ void main()
 	FragColor = vec4(0.1, 0.1, 0.1, 1.0);
 })";
 
-Renderer::Renderer(float width, float height)
-  : m_Width(width), m_Height(height)
+Renderer::Renderer(float width, float height, float displayScale)
+  : m_Width(width), m_Height(height), m_PixelDensity(displayScale)
 {
   // Load OpenGL function pointers
   gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
@@ -107,7 +107,7 @@ Renderer::Renderer(float width, float height)
   GenerateShaders();
 
   // Resize the viewport (no need to use Resize() because we've already done everything else it does)
-  glViewport(0, 0, width, height);
+  glViewport(0, 0, width * displayScale, height * displayScale);
   
   // Enable Blending and Depth Testing
   glEnable(GL_BLEND);
@@ -202,7 +202,7 @@ void Renderer::Resize(float width, float height)
   m_Width = width;
   m_Height = height;
 
-  glViewport(0, 0, width, height);
+  glViewport(0, 0, width * m_PixelDensity, height * m_PixelDensity);
 }
 
 void Renderer::GenerateBuffers()
