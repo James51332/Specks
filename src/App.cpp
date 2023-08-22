@@ -85,7 +85,7 @@ void App::Init(float w, float h)
   Input::Init();
   
   // Setup the particle system
-  m_System = new System();
+  m_System = new System(40);
 }
 
 void App::Shutdown()
@@ -114,6 +114,7 @@ void App::PollEvents()
     {
       case SDL_EVENT_WINDOW_RESIZED:
       {
+        m_Camera->SetWindowSize(event.window.data1, event.window.data2);
         m_Renderer->Resize(event.window.data1, event.window.data2);
         break;
       }

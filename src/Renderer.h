@@ -33,10 +33,13 @@ private:
 
 private:
   // Particle Rendering Data
-  GLuint m_VAO, m_VBO, m_IBO, m_Shader;
+  GLuint m_ParticleVAO, m_VBO, m_IBO, m_Shader;
   GLuint m_InstancedVBO;
   glm::vec2* m_InstancedBuffer;
   std::size_t m_Particles = 0, m_MaxParticles = 10000;
+  
+  // Background Rendering Data
+  GLuint m_QuadVAO, m_QuadVBO, m_QuadIBO, m_QuadShader;
   
   // General Rendering Data
   bool m_InFrame = false;

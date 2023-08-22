@@ -8,7 +8,7 @@ namespace Speck
 System::System(std::size_t numParticles)
 {
   m_Particles.reserve(numParticles);
-  std::size_t rowSize = 100;
+  std::size_t rowSize = 20;
   for (std::size_t i = 0; i < numParticles; i++)
   {
     std::size_t x = i % rowSize;
