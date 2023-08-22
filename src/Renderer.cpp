@@ -60,7 +60,7 @@ void main()
   float dist = distance(vec2(0.0f), v_UVNorm);
   float radius = 1.0f;
 
-	float col = step(dist, radius);
+	float col = 1.0f;
 	float delta = fwidth(dist);
 	float alpha = smoothstep(radius + delta, radius - delta, dist);
 	FragColor = vec4(col, col, col, alpha);

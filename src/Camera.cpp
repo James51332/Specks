@@ -15,14 +15,8 @@ Camera::Camera(float windowWidth, float windowHeight, float size)
   CalculateMatrices();
 }
 
-void Camera::Update()
+void Camera::Update(float timestep)
 {
-  // Calculate the time in seconds since the last time we updated the camera
-  static float lastTime = SDL_GetTicks();
-  float curTime = SDL_GetTicks();
-  float timestep = (curTime - lastTime) * 0.001f;
-  lastTime = curTime;
-  
   // Store whether we've moved so we don't wastefully calculate matrices
   bool shouldUpdateMatrices = false;
   

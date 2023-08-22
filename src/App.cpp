@@ -31,15 +31,23 @@ void App::Run()
 {
   // Initialization code
   Init();
+  float lastTime = SDL_GetTicks();
 
   // Run Loop
   m_Running = true;
   while (m_Running)
   {
+    // Poll User Input
     PollEvents();
+    
+    // Calculate timestep since last frame (ms to s)
+    float curTime = SDL_GetTicks();
+    float timestep = (curTime - lastTime) * 0.001f;
+    lastTime = curTime;
 
-    m_System->Update();
-    m_Camera->Update();
+    // Update the camera system
+    m_System->Update(timestep);
+    m_Camera->Update(timestep);
     
     // Clear the screen
     glClearColor(0.2f, 0.2f, 0.25f, 1.0f);

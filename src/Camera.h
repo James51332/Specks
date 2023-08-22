@@ -13,7 +13,7 @@ public:
   // ~Camera();// No need to destroy any resources
 
   // Updates the camera based on user input
-  void Update();
+  void Update(float timestep);
   
   void SetPosition(const glm::vec3& position);
   void SetRotation(float rotation);
