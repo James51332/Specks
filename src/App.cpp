@@ -54,7 +54,7 @@ void App::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     m_Renderer->BeginFrame(m_Camera, m_System->GetBoundingBoxSize());
-    m_Renderer->DrawParticles(m_System->GetParticlePositions());
+    m_Renderer->DrawParticles(m_System->GetParticles());
     m_Renderer->EndFrame();
     
     SDL_GL_SwapWindow(m_Window);

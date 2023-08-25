@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 
 #include "Camera.h"
+#include "Particle.h"
 
 namespace Speck
 {
@@ -14,11 +15,11 @@ public:
   Renderer(float width, float height, float displayScale = 1.0f);
   ~Renderer();
   
-  void BeginFrame(Camera* camera, float systemBoundsSize);
+  void BeginFrame(Camera* camera, float boundingBoxSize);
   void EndFrame();
   
-  void DrawParticle(float x, float y);
-  void DrawParticles(const std::vector<glm::vec2>& particles);
+  void DrawParticle(const Particle& particle);
+  void DrawParticles(const std::vector<Particle>& particles);
 
   void Resize(float width, float height);
 
@@ -39,9 +40,15 @@ private:
   GLuint m_ParticleVAO, m_BackgroundVAO;
   GLuint m_ParticleShader, m_BackgroundShader;
   
-  // Particle Instacning Data
+  // Particle Instancing Data
+  struct InstancedVertex
+  {
+    glm::vec2 Position;
+    glm::vec4 Color;
+  };
+  
   GLuint m_InstancedVBO;
-  glm::vec2* m_InstancedBuffer;
+  InstancedVertex* m_InstancedBuffer;
   std::size_t m_Particles = 0, m_MaxParticles = 10000;
   
   // General Rendering Data

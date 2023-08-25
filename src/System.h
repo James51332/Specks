@@ -3,6 +3,8 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+#include "Particle.h"
+
 namespace Speck
 {
 
@@ -14,7 +16,7 @@ public:
   
   void Update(float timestep);
   
-  const std::vector<glm::vec2>& GetParticlePositions() const { return m_Positions; }
+  const std::vector<Particle>& GetParticles() const { return m_Particles; }
   float GetBoundingBoxSize() const { return m_Size; }
   
 private:
@@ -22,14 +24,8 @@ private:
   void BoundPositions();
 
 private:
-  // We are gonna keep each of these seperate so it's easy
-  // to copy render data to the gpu. We can test other configurations
-  // in the future, but this seems easy.
-  std::size_t m_NumParticles;
-  std::vector<glm::vec2> m_Positions;
-  std::vector<glm::vec2> m_Velocities;
-  std::vector<glm::vec2> m_NetForces;
-  
+  std::vector<Particle> m_Particles;
+
   // Size of the bounding box at which point particles will wrap around.
   // Goes from -m_Size to m_Size on both x and y axes.
   float m_Size;

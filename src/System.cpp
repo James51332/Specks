@@ -7,20 +7,23 @@ namespace Speck
 {
 
 System::System(std::size_t numParticles, float size)
-	: m_NumParticles(numParticles), m_Size(size)
+	: m_Size(size)
 {
-  m_Positions.reserve(numParticles);
-  m_Velocities.reserve(numParticles);
-  m_NetForces.reserve(numParticles);
-
+  m_Particles.reserve(numParticles);
   for (std::size_t i = 0; i < numParticles; i++)
   {
+    Particle p;
+
     float x = glm::linearRand(-size, size);
     float y = glm::linearRand(-size, size);
+    p.Position = { x, y };
     
-    m_Positions.push_back({ x, y });
-    m_Velocities.push_back(glm::circularRand(glm::linearRand(3.0f, 6.0f)));
-    m_NetForces.push_back({ 0.0f, 0.0f });
+    float speed = glm::linearRand(3.0f, 6.0f);
+    p.Velocity = glm::circularRand(speed);
+
+    p.NetForce = { 0.0f, 0.0f };
+
+    m_Particles.push_back(p);
   }
 }
 
@@ -29,10 +32,11 @@ void System::Update(float timestep)
   CalculateForces();
 
   // Update Position (Euler Integration-TODO: Verlet Integration?)
-  for (std::size_t i = 0; i < m_NumParticles; i++)
+  for (std::size_t i = 0; i < m_Particles.size(); i++)
   {
-    m_Velocities[i] += m_NetForces[i] * timestep;
-    m_Positions[i] += m_Velocities[i] * timestep;
+    Particle& particle = m_Particles[i];
+    particle.Velocity += particle.NetForce * timestep;
+    particle.Position += particle.Velocity * timestep;
   }
 
   BoundPositions();
@@ -42,10 +46,10 @@ void System::Update(float timestep)
 constexpr float repulsionThreshold = 3.0f;
 constexpr float repulsionStrength = 10.0f;
 
-static const glm::vec2& forceFunction(const glm::vec2& particle, const glm::vec2& other)
+static const glm::vec2& forceFunction(const Particle& particle, const Particle& other)
 {
-  glm::vec2 delta = particle - other;
-  float distance = glm::distance(particle, other);
+  glm::vec2 delta = particle.Position - other.Position;
+  float distance = glm::length(delta);
 
   if (distance <= repulsionThreshold)
   {
@@ -59,30 +63,29 @@ static const glm::vec2& forceFunction(const glm::vec2& particle, const glm::vec2
 
 void System::CalculateForces()
 {
-  for (std::size_t i = 0; i < m_NumParticles; i++)
+  for (std::size_t i = 0; i < m_Particles.size(); i++)
   {
-    glm::vec2& particle = m_Positions[i];
-    glm::vec2& force = m_NetForces[i];
-    force = { 0.0f, 0.0f };
+    Particle& particle = m_Particles[i];
+    particle.NetForce = { 0.0f, 0.0f };
 
-    for (std::size_t j = 1; j < m_NumParticles; j++)
+    for (std::size_t j = 1; j < m_Particles.size(); j++)
     {
       if (i == j) continue;
-      glm::vec2& other = m_Positions[j];
-      force += forceFunction(particle, other);
+      Particle& other = m_Particles[j];
+      particle.NetForce += forceFunction(particle, other);
     }
   }
 }
 
 void System::BoundPositions()
 {
-  for (std::size_t i = 0; i < m_NumParticles; i++)
+  for (std::size_t i = 0; i < m_Particles.size(); i++)
   {
-    glm::vec2& particle = m_Positions[i];
-    if (particle.x > m_Size) particle.x -= 2.0f * m_Size;
-    if (particle.x < -m_Size) particle.x += 2.0f * m_Size;
-    if (particle.y > m_Size) particle.y -= 2.0f * m_Size;
-    if (particle.y < -m_Size) particle.y += 2.0f * m_Size;
+    glm::vec2& position = m_Particles[i].Position;
+    if (position.x > m_Size) position.x -= 2.0f * m_Size;
+    if (position.x < -m_Size) position.x += 2.0f * m_Size;
+    if (position.y > m_Size) position.y -= 2.0f * m_Size;
+    if (position.y < -m_Size) position.y += 2.0f * m_Size;
   }
 }
 
