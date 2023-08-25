@@ -91,7 +91,7 @@ void App::Init(int w, int h)
   Input::Init();
   
   // Setup the particle system
-  m_System = new System(40, 50.0f);
+  m_System = new System(5, 10.0f);
 }
 
 void App::Shutdown()

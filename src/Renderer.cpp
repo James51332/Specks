@@ -193,7 +193,7 @@ void Renderer::Flush()
   
   // Copy the instanced buffers to the instanced vbos
   glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec2) * m_Particles, m_InstancedBuffer);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(InstancedVertex) * m_Particles, m_InstancedBuffer);
   
   // Display the instances
   glBindVertexArray(m_ParticleVAO);
