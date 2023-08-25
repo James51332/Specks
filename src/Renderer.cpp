@@ -105,7 +105,7 @@ Renderer::Renderer(float width, float height, float displayScale)
   GenerateShaders();
 
   // Resize the viewport (no need to use Resize() because we've already done everything else it does)
-  glViewport(0, 0, width * displayScale, height * displayScale);
+  glViewport(0, 0, static_cast<GLsizei>(width * displayScale), static_cast<GLsizei>(height * displayScale));
   
   // Enable Blending and Depth Testing
   glEnable(GL_BLEND);
@@ -209,7 +209,7 @@ void Renderer::Resize(float width, float height)
   m_Width = width;
   m_Height = height;
 
-  glViewport(0, 0, width * m_PixelDensity, height * m_PixelDensity);
+  glViewport(0, 0, static_cast<GLsizei>(width * m_PixelDensity), static_cast<GLsizei>(height * m_PixelDensity));
 }
 
 void Renderer::GenerateBuffers()
