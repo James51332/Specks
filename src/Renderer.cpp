@@ -122,7 +122,7 @@ Renderer::~Renderer()
   DestroyShaders();
 }
 
-void Renderer::BeginFrame(Camera* camera)
+void Renderer::BeginFrame(Camera* camera, float systemBoundSize)
 {
   m_InFrame = true;
   m_Camera = camera;
@@ -132,7 +132,7 @@ void Renderer::BeginFrame(Camera* camera)
   glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_Camera->GetViewProjectionMatrix()[0][0]);
   
   uniform = glGetUniformLocation(m_BackgroundShader, "u_Transform");
-  glm::mat4 transform = glm::scale(glm::mat4(1.0f), glm::vec3(50.0f, 50.0f, 50.0f));
+  glm::mat4 transform = glm::scale(glm::mat4(1.0f), glm::vec3(systemBoundSize, systemBoundSize, 1.0f));
   glUniformMatrix4fv(uniform, 1, GL_FALSE, &transform[0][0]);
   
   glBindVertexArray(m_BackgroundVAO);

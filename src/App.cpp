@@ -31,7 +31,7 @@ void App::Run()
 {
   // Initialization code
   Init();
-  float lastTime = SDL_GetTicks();
+  float lastTime = static_cast<float>(SDL_GetTicks());
 
   // Run Loop
   m_Running = true;
@@ -41,7 +41,7 @@ void App::Run()
     PollEvents();
     
     // Calculate timestep since last frame (ms to s)
-    float curTime = SDL_GetTicks();
+    float curTime = static_cast<float>(SDL_GetTicks());
     float timestep = (curTime - lastTime) * 0.001f;
     lastTime = curTime;
 
@@ -53,7 +53,7 @@ void App::Run()
     glClearColor(0.2f, 0.2f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    m_Renderer->BeginFrame(m_Camera);
+    m_Renderer->BeginFrame(m_Camera, m_System->GetBoundingBoxSize());
     m_Renderer->DrawParticles(m_System->GetParticlePositions());
     m_Renderer->EndFrame();
     
@@ -64,7 +64,7 @@ void App::Run()
   Shutdown();
 }
 
-void App::Init(float w, float h)
+void App::Init(int w, int h)
 {
   // Create the window for the app
   m_Window = SDL_CreateWindow(m_Name.c_str(), w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
@@ -84,14 +84,14 @@ void App::Init(float w, float h)
   
   // Initialize the renderer
   float displayScale = SDL_GetWindowDisplayScale(m_Window);
-  m_Renderer = new Renderer(w, h, displayScale);
-  m_Camera = new Camera(w, h, 25.0f);
+  m_Renderer = new Renderer(static_cast<float>(w), static_cast<float>(h), displayScale);
+  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 60.0f);
   
   // Initialize the input manager
   Input::Init();
   
   // Setup the particle system
-  m_System = new System(40);
+  m_System = new System(40, 50.0f);
 }
 
 void App::Shutdown()
@@ -120,8 +120,10 @@ void App::PollEvents()
     {
       case SDL_EVENT_WINDOW_RESIZED:
       {
-        m_Camera->SetWindowSize(event.window.data1, event.window.data2);
-        m_Renderer->Resize(event.window.data1, event.window.data2);
+        float width = static_cast<float>(event.window.data1);
+        float height = static_cast<float>(event.window.data2);
+        m_Camera->SetWindowSize(width, height);
+        m_Renderer->Resize(width, height);
         break;
       }
       case SDL_EVENT_QUIT:

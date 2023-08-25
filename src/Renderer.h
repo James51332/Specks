@@ -14,7 +14,7 @@ public:
   Renderer(float width, float height, float displayScale = 1.0f);
   ~Renderer();
   
-  void BeginFrame(Camera* camera);
+  void BeginFrame(Camera* camera, float systemBoundsSize);
   void EndFrame();
   
   void DrawParticle(float x, float y);

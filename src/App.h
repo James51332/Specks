@@ -20,7 +20,7 @@ public:
   void Run();
 
 private:
-  void Init(float w = 800, float h = 600);
+  void Init(int w = 800, int h = 600);
   void Shutdown();
 
   void PollEvents();

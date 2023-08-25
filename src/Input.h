@@ -18,9 +18,9 @@ public:
   static float GetScrollX() { return s_ScrollDeltaX; }
   static float GetScrollY() { return s_ScrollDeltaY; }
   
-  static bool MousePress(int btn) { return s_MouseButtons[btn] && !s_MouseButtonsLast[btn]; }
-  static bool MouseDown(int btn) { return s_MouseButtons[btn]; }
-  static bool MouseRelease(int btn) { return !s_MouseButtons[btn] && s_MouseButtonsLast[btn]; }
+  static bool MousePress(SDL_MouseID btn) { return s_MouseButtons[btn] && !s_MouseButtonsLast[btn]; }
+  static bool MouseDown(SDL_MouseID btn) { return s_MouseButtons[btn]; }
+  static bool MouseRelease(SDL_MouseID btn) { return !s_MouseButtons[btn] && s_MouseButtonsLast[btn]; }
   
   static bool KeyPress(SDL_Scancode key) { return s_Keys[key] && !s_KeysLast[key]; }
   static bool KeyDown(SDL_Scancode key) { return s_Keys[key]; }

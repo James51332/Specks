@@ -66,13 +66,13 @@ void Input::SetMouseUp(SDL_MouseID btn)
 
 void Input::SetKeyDown(SDL_Scancode key)
 {
-  if (key < SDL_NUM_SCANCODES)
+  if (key < SDL_NUM_SCANCODES && key >= 0)
     s_Keys[key] = true;
 }
 
 void Input::SetKeyUp(SDL_Scancode key)
 {
-  if (key < SDL_NUM_SCANCODES)
+  if (key < SDL_NUM_SCANCODES && key >= 0)
     s_Keys[key] = false;
 }
 
