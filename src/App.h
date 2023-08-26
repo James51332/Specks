@@ -6,6 +6,7 @@
 #include "Renderer.h"
 #include "Camera.h"
 #include "System.h"
+#include "ColorMatrix.h"
 
 namespace Speck
 {
@@ -32,6 +33,7 @@ private:
   Renderer* m_Renderer = nullptr;
   Camera* m_Camera = nullptr;
   System* m_System = nullptr;
+  ColorMatrix m_ColorMatrix = ColorMatrix(3);
 
   SDL_Window* m_Window = nullptr;
   SDL_GLContext m_Context = nullptr;

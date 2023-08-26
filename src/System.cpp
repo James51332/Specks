@@ -6,7 +6,7 @@
 namespace Speck
 {
 
-System::System(std::size_t numParticles, float size)
+System::System(std::size_t numParticles, std::size_t numColors, float size)
 	: m_Size(size)
 {
   m_Particles.reserve(numParticles);
@@ -18,18 +18,20 @@ System::System(std::size_t numParticles, float size)
     float y = glm::linearRand(-size, size);
     p.Position = { x, y };
     
-    float speed = glm::linearRand(3.0f, 6.0f);
+    float speed = 15.0f;
     p.Velocity = glm::circularRand(speed);
 
     p.NetForce = { 0.0f, 0.0f };
+
+    p.Color = i % numColors;
 
     m_Particles.push_back(p);
   }
 }
 
-void System::Update(float timestep)
+void System::Update(const ColorMatrix& matrix, float timestep)
 {
-  CalculateForces();
+  CalculateForces(matrix);
 
   // Update Position (Euler Integration-TODO: Verlet Integration?)
   for (std::size_t i = 0; i < m_Particles.size(); i++)
@@ -42,37 +44,49 @@ void System::Update(float timestep)
   BoundPositions();
 }
 
-// TODO: Move to a separate class to maintain a matrix of attraction and repulsion.
-constexpr float repulsionThreshold = 3.0f;
-constexpr float repulsionStrength = 10.0f;
+// Constants the define the parameters of the simulation
+constexpr float frictionStrength = 0.4f;
+constexpr static float interactionRadius = 15.0f;
+constexpr static float repulsionRadius = 0.3f;
 
-static const glm::vec2& forceFunction(const Particle& particle, const Particle& other)
+static const glm::vec2& forceFunction(const Particle& particle, const Particle& other, const ColorMatrix& matrix, float size)
 {
-  glm::vec2 delta = particle.Position - other.Position;
-  float distance = glm::length(delta);
+  // Get the direction towards other particle, accounting for boundary wrapping.
+  glm::vec2 delta = other.Position - particle.Position;
+  if (delta.x > size) delta.x -= 2.0f * size;
+  if (delta.x < -size) delta.x += 2.0f * size;
+  if (delta.y > size) delta.y -= 2.0f * size;
+  if (delta.y < -size) delta.y += 2.0f * size;
 
-  if (distance <= repulsionThreshold)
+  glm::vec2 direction = glm::normalize(delta);
+  float relDistance = glm::length(delta) / interactionRadius;
+
+  float relForceStrength = 0.0f;
+  if (relDistance <= repulsionRadius)
   {
-    // The force should be the repulsion strength at 0.0f, and 0.0f at the threshold.
-    // Therefore. The slope of the line is strength / threshold. May optimize in future.
-    return glm::normalize(delta) * (repulsionStrength / repulsionThreshold) - repulsionThreshold;
+    relForceStrength = (relDistance / repulsionRadius - 1);
+  } 
+  else if (relDistance <= 1.0f)
+  {
+    relForceStrength = 1.0f - glm::abs(2.0f * relDistance - 1.0f - repulsionRadius) / (1.0f - repulsionRadius);
+    relForceStrength *= matrix.GetAttractionScale(particle.Color, other.Color);
   }
 
-  return { 0.0f, 0.0f };
+  return interactionRadius * direction * relForceStrength;
 }
 
-void System::CalculateForces()
+void System::CalculateForces(const ColorMatrix& matrix)
 {
   for (std::size_t i = 0; i < m_Particles.size(); i++)
   {
     Particle& particle = m_Particles[i];
-    particle.NetForce = { 0.0f, 0.0f };
+    particle.NetForce = - particle.Velocity * frictionStrength;
 
-    for (std::size_t j = 1; j < m_Particles.size(); j++)
+    for (std::size_t j = 0; j < m_Particles.size(); j++)
     {
       if (i == j) continue;
       Particle& other = m_Particles[j];
-      particle.NetForce += forceFunction(particle, other);
+      particle.NetForce += forceFunction(particle, other, matrix, m_Size);
     }
   }
 }

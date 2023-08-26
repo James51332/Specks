@@ -46,7 +46,7 @@ void App::Run()
     lastTime = curTime;
 
     // Update the camera system
-    m_System->Update(timestep);
+    m_System->Update(m_ColorMatrix, timestep);
     m_Camera->Update(timestep);
     
     // Clear the screen
@@ -54,7 +54,7 @@ void App::Run()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     m_Renderer->BeginFrame(m_Camera, m_System->GetBoundingBoxSize());
-    m_Renderer->DrawParticles(m_System->GetParticles());
+    m_Renderer->DrawParticles(m_System->GetParticles(), m_ColorMatrix);
     m_Renderer->EndFrame();
     
     SDL_GL_SwapWindow(m_Window);
@@ -85,13 +85,16 @@ void App::Init(int w, int h)
   // Initialize the renderer
   float displayScale = SDL_GetWindowDisplayScale(m_Window);
   m_Renderer = new Renderer(static_cast<float>(w), static_cast<float>(h), displayScale);
-  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 60.0f);
+  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 160.0f);
   
   // Initialize the input manager
   Input::Init();
   
   // Setup the particle system
-  m_System = new System(5, 10.0f);
+  m_System = new System(500, 3, 75.0f);
+  m_ColorMatrix.SetColor(0, { 1.0f, 1.0f, 0.0f, 1.0f });
+  m_ColorMatrix.SetColor(1, { 0.0f, 1.0f, 1.0f, 1.0f });
+  m_ColorMatrix.SetColor(2, { 1.0f, 0.0f, 1.0f, 1.0f });
 }
 
 void App::Shutdown()

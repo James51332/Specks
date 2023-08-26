@@ -5,6 +5,7 @@
 
 #include "Camera.h"
 #include "Particle.h"
+#include "ColorMatrix.h"
 
 namespace Speck
 {
@@ -18,8 +19,8 @@ public:
   void BeginFrame(Camera* camera, float boundingBoxSize);
   void EndFrame();
   
-  void DrawParticle(const Particle& particle);
-  void DrawParticles(const std::vector<Particle>& particles);
+  void DrawParticle(const Particle& particle, const ColorMatrix& matrix);
+  void DrawParticles(const std::vector<Particle>& particles, const ColorMatrix& matrix);
 
   void Resize(float width, float height);
 

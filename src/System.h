@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "Particle.h"
+#include "ColorMatrix.h"
 
 namespace Speck
 {
@@ -12,15 +13,15 @@ namespace Speck
 class System
 {
 public:
-  System(std::size_t numParticles = 10000, float size = 100.0f);
+  System(std::size_t numParticles = 10000, std::size_t numColors = 1, float size = 100.0f);
   
-  void Update(float timestep);
+  void Update(const ColorMatrix& matrix, float timestep);
   
   const std::vector<Particle>& GetParticles() const { return m_Particles; }
   float GetBoundingBoxSize() const { return m_Size; }
   
 private:
-  void CalculateForces();
+  void CalculateForces(const ColorMatrix& matrix);
   void BoundPositions();
 
 private:

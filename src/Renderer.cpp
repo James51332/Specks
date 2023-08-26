@@ -138,16 +138,16 @@ void Renderer::BeginFrame(Camera* camera, float systemBoundSize)
   glDrawElements(GL_TRIANGLES, sizeof(quadIndices) / sizeof(quadIndices[0]), GL_UNSIGNED_SHORT, nullptr);
 }
 
-void Renderer::DrawParticle(const Particle& particle)
+void Renderer::DrawParticle(const Particle& particle, const ColorMatrix& matrix)
 {
   if (m_Particles == m_MaxParticles)
     Flush();
   
-  m_InstancedBuffer[m_Particles] = { particle.Position, glm::vec4(1.0f) }; // TODO: Get color from color cache
+  m_InstancedBuffer[m_Particles] = { particle.Position, matrix.GetColor(particle.Color) };
   m_Particles++;
 }
 
-void Renderer::DrawParticles(const std::vector<Particle>& particles)
+void Renderer::DrawParticles(const std::vector<Particle>& particles, const ColorMatrix& matrix)
 {
   std::size_t num = particles.size();
   if (m_Particles + num >= m_MaxParticles)
@@ -156,7 +156,7 @@ void Renderer::DrawParticles(const std::vector<Particle>& particles)
   if (num <= m_MaxParticles)
   {
     for (std::size_t i = 0; i < num; i++)
-      m_InstancedBuffer[m_Particles + i] = { particles[i].Position, glm::vec4(1.0f) }; // TODO: Get color from color cache
+      m_InstancedBuffer[m_Particles + i] = { particles[i].Position, matrix.GetColor(particles[i].Color) };
     m_Particles += num;
   } else
   {
@@ -168,7 +168,7 @@ void Renderer::DrawParticles(const std::vector<Particle>& particles)
       std::size_t batchSize = m_MaxParticles <= left ? m_MaxParticles : left;
 
       for (std::size_t i = 0; i < batchSize; i++)
-        m_InstancedBuffer[m_Particles + i] = { particles[i + current].Position, glm::vec4(1.0f) }; // TODO: Get color from color cache
+        m_InstancedBuffer[m_Particles + i] = { particles[i + current].Position, matrix.GetColor(particles[i + current].Color) };
      
       Flush();
       current += batchSize;
