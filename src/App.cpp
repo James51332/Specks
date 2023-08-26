@@ -85,7 +85,7 @@ void App::Init(int w, int h)
   // Initialize the renderer
   float displayScale = SDL_GetWindowDisplayScale(m_Window);
   m_Renderer = new Renderer(static_cast<float>(w), static_cast<float>(h), displayScale);
-  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 160.0f);
+  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 100.0f);
   
   // Initialize the input manager
   Input::Init();
