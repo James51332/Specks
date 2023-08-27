@@ -61,7 +61,7 @@ void main()
 
 	float delta = fwidth(dist);
 	float alpha = smoothstep(radius + delta, radius - delta, dist);
-	FragColor = mix(FragColor, v_Color, alpha);
+	FragColor = vec4(v_Color.xyz, v_Color.w * alpha);
 })";
 
 const char* backgroundVertex = R"(
@@ -244,9 +244,9 @@ void Renderer::GenerateArrays()
   // Create our particle vertex array
   {
     glGenVertexArrays(1, &m_ParticleVAO);
-    glBindVertexArray(m_ParticleVAO);
     
     // Attach our vbo to our vao and define the vertex layout
+    glBindVertexArray(m_ParticleVAO);
     glBindBuffer(GL_ARRAY_BUFFER, m_QuadVBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)0);
     glEnableVertexAttribArray(0);
@@ -254,6 +254,7 @@ void Renderer::GenerateArrays()
     glEnableVertexAttribArray(1);
     
     // Attach our instanced buffers and define the layout and increment
+    glBindVertexArray(m_ParticleVAO);
     glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(InstancedVertex), (void*)0);
     glEnableVertexAttribArray(2);

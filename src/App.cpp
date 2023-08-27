@@ -45,8 +45,14 @@ void App::Run()
     float timestep = (curTime - lastTime) * 0.001f;
     lastTime = curTime;
 
+    // Update simulation
+    static bool updateSim = true;
+    if (Input::KeyPress(SDL_SCANCODE_SPACE)) updateSim = !updateSim;
+    
+    if (updateSim)
+  		m_System->Update(m_ColorMatrix, timestep);
+    
     // Update the camera system
-    m_System->Update(m_ColorMatrix, timestep);
     m_Camera->Update(timestep);
     
     // Clear the screen
