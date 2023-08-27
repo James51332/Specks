@@ -16,12 +16,14 @@ public:
   void SetColor(std::size_t colorIndex, const glm::vec4& color);
   const glm::vec4& GetColor(std::size_t colorIndex) const;
 
-  // TODO: Implement the matrix
   void SetAttractionScale(std::size_t primary, std::size_t other, float scale);
-  float GetAttractionScale(std::size_t primary, std::size_t other) const { return primary == other ? 1.0f : -1.0f; }
+  float GetAttractionScale(std::size_t primary, std::size_t other) const;
 
 private:
   std::vector<glm::vec4> m_Colors;
+  
+  // Each attraction factor is accessed via index = primary * numColors + other
+  std::vector<float> m_AttractionScales;
 };
 
 }

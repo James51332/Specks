@@ -45,8 +45,8 @@ void System::Update(const ColorMatrix& matrix, float timestep)
 }
 
 // Constants the define the parameters of the simulation
-constexpr float frictionStrength = 0.4f;
-constexpr static float interactionRadius = 15.0f;
+constexpr float frictionStrength = 2.0f;
+constexpr static float interactionRadius = 30.0f;
 constexpr static float repulsionRadius = 0.3f;
 
 static const glm::vec2& forceFunction(const Particle& particle, const Particle& other, const ColorMatrix& matrix, float size)

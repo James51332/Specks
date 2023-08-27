@@ -85,16 +85,18 @@ void App::Init(int w, int h)
   // Initialize the renderer
   float displayScale = SDL_GetWindowDisplayScale(m_Window);
   m_Renderer = new Renderer(static_cast<float>(w), static_cast<float>(h), displayScale);
-  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 100.0f);
+  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 280.0f);
   
   // Initialize the input manager
   Input::Init();
   
   // Setup the particle system
-  m_System = new System(500, 3, 75.0f);
+  m_System = new System(1000, 5, 300.0f);
   m_ColorMatrix.SetColor(0, { 1.0f, 1.0f, 0.0f, 1.0f });
   m_ColorMatrix.SetColor(1, { 0.0f, 1.0f, 1.0f, 1.0f });
   m_ColorMatrix.SetColor(2, { 1.0f, 0.0f, 1.0f, 1.0f });
+  m_ColorMatrix.SetColor(3, { 0.5f, 1.0f, 0.8f, 1.0f });
+  m_ColorMatrix.SetColor(4, { 0.8f, 0.2f, 0.5f, 1.0f });
 }
 
 void App::Shutdown()
