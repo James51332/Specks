@@ -33,12 +33,12 @@ void System::Update(const ColorMatrix& matrix, float timestep)
 {
   CalculateForces(matrix);
 
-  // Update Position (Euler Integration-TODO: Verlet Integration?)
+  // Update Position (We use a modified version of velocity verlet to integrate)
   for (std::size_t i = 0; i < m_Particles.size(); i++)
   {
     Particle& particle = m_Particles[i];
+    particle.Position += (particle.Velocity + particle.NetForce * timestep) * timestep;
     particle.Velocity += particle.NetForce * timestep;
-    particle.Position += particle.Velocity * timestep;
   }
 
   BoundPositions();
