@@ -97,7 +97,7 @@ void App::Init(int w, int h)
   Input::Init();
   
   // Setup the particle system
-  m_System = new System(1000, 5, 280.0f);
+  m_System = new System(1500, 5, 280.0f);
   m_ColorMatrix.SetColor(0, { 1.0f, 1.0f, 0.0f, 1.0f });
   m_ColorMatrix.SetColor(1, { 0.0f, 1.0f, 1.0f, 1.0f });
   m_ColorMatrix.SetColor(2, { 1.0f, 0.0f, 1.0f, 1.0f });

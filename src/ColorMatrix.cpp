@@ -8,16 +8,15 @@ namespace Speck
 ColorMatrix::ColorMatrix(int numColors)
   : m_Colors(numColors, glm::vec4(1.0f)), m_AttractionScales(25, 0.0f)
 {
+  // Set the seed to the time so that the generator doesn't produce the same results
+  srand(time(0));
+  
+  // Generate random values for the color matrix
   for (std::size_t i = 0; i < numColors; i++)
   {
     for (std::size_t j = 0; j < numColors; j++)
     {
-      float attraction = 0.0f;
-      if (i == j) attraction = 1.0f;
-      else if ((i + 1) % numColors == j) attraction = 0.2f;
-      else attraction = 0.0f;
-
-      m_AttractionScales[i * numColors + j] = attraction; // glm::gaussRand(0.0f, 1.0f);
+      m_AttractionScales[i * numColors + j] = glm::gaussRand(0.0f, 1.0f);
     }
   }
 }
