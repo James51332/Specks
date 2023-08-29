@@ -13,6 +13,7 @@ struct Particle
   
   std::size_t Color = 0;
   
+  std::size_t ID = 0; // Particles also cache their index
   std::size_t CellIndex = 0; // Particles cache their cells
 };
 

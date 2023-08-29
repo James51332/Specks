@@ -1,5 +1,10 @@
 # Basic Info
 cmake_minimum_required(VERSION 3.7)
+
+# Set the C++ Standard
+set (CMAKE_CXX_STANDARD 20)
+set (CMAKE_CXX_STANDARD_REQUIRED True)
+
 project(Specks)
 
 # Vendored SDL Library (Output to the same directory as project)
@@ -8,10 +13,6 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_subdirectory(vendor/sdl2 EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/glad EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/glm EXCLUDE_FROM_ALL)
-
-# Set the C++ Standard
-set (CMAKE_CXX_STANDARD 20)
-set (CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Source Files
 file(GLOB_RECURSE SRC_FILES "src/*.cpp" "src/*.h")

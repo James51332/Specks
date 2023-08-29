@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <glm/gtc/random.hpp>
+#include <thread>
 
 namespace Speck
 {
@@ -19,6 +20,7 @@ System::System(std::size_t numParticles, std::size_t numColors, float size)
   for (std::size_t i = 0; i < numParticles; i++)
   {
     Particle p;
+    p.ID = i;
 
     float x = glm::linearRand(-size, size);
     float y = glm::linearRand(-size, size);
@@ -70,53 +72,77 @@ void System::PartitionsParticles()
 
 void System::CalculateForces(const ColorMatrix& matrix)
 {
-  for (std::size_t i = 0; i < m_Particles.size(); i++)
+  // Thread Job Function (We only write to our specified particle[i].netforce and never read it, so there's no need for locks)
+  auto jobFunc = [&](std::size_t start, std::size_t end)
   {
-    Particle& particle = m_Particles[i];
-    particle.NetForce = - particle.Velocity * m_FrictionStrength;
-
-    // Create a list of neighboring cells
-    constexpr std::size_t numNeighbors = 9;
-    static std::size_t neighbors[numNeighbors] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    for (std::size_t i = start; i <= end; i++)
     {
-      // Find the x and y of our current cell
-    	int32_t cell = particle.CellIndex;
-      int32_t cellX = particle.CellIndex % m_CellsAcross;
-      int32_t cellY = particle.CellIndex / m_CellsAcross; // integer division
+      Particle& particle = m_Particles[i];
+      particle.NetForce = - particle.Velocity * m_FrictionStrength;
       
-      // Find the value we add to the cell's index to move in a certain direction, accounting for wrapping
-    	int32_t ld = (cellX != 0) ? -1 : (m_CellsAcross - 1); // if on left, add the size of grid
-    	int32_t rd = (cellX != m_CellsAcross - 1) ? 1 : -static_cast<int32_t>(m_CellsAcross - 1); // if on right, subtract size of grid
-      int32_t ud = (cellY != 0) ? -m_CellsAcross : (m_CellsAcross * (m_CellsAcross - 1)); // if on top, add size of grid
-    	int32_t dd = (cellY != m_CellsAcross - 1) ? m_CellsAcross : -static_cast<int32_t>(m_CellsAcross * (m_CellsAcross - 1)); // if on bottom, subtract size of grid
-    
-      // Create our list by moving our cell's index in all of these directions
-    	neighbors[0] = particle.CellIndex + ld + ud;
-    	neighbors[1] = particle.CellIndex      + ud;
-    	neighbors[2] = particle.CellIndex + rd + ud;
-    	neighbors[3] = particle.CellIndex + ld     ;
-    	neighbors[4] = particle.CellIndex          ;
-    	neighbors[5] = particle.CellIndex + rd     ;
-    	neighbors[6] = particle.CellIndex + ld + dd;
-    	neighbors[7] = particle.CellIndex      + dd;
-    	neighbors[8] = particle.CellIndex + rd + dd;
-    }
-      
-  	// Iterate over these neighbors
-    for (std::size_t neighbor = 0; neighbor < numNeighbors; neighbor++)
-    {
-      int32_t cellIndex = neighbors[neighbor];
-      Cell& cell = m_Cells[cellIndex];
-      
-      for (std::size_t j = 0; j < cell.Particles.size(); j++)
+      // Create a list of neighboring cells
+      constexpr std::size_t numNeighbors = 9;
+      std::size_t neighbors[numNeighbors];
       {
-        std::size_t otherID = cell.Particles[j];
-        if (i == otherID) continue;
-        Particle& other = m_Particles[otherID];
+        // Find the x and y of our current cell
+        int32_t cell = particle.CellIndex;
+        int32_t cellX = particle.CellIndex % m_CellsAcross;
+        int32_t cellY = particle.CellIndex / m_CellsAcross; // integer division
         
-        particle.NetForce += ForceFunction(particle, other, matrix);
+        // Find the value we add to the cell's index to move in a certain direction, accounting for wrapping
+        int32_t ld = (cellX != 0) ? -1 : (m_CellsAcross - 1); // if on left, add the size of grid
+        int32_t rd = (cellX != m_CellsAcross - 1) ? 1 : -static_cast<int32_t>(m_CellsAcross - 1); // if on right, subtract size of grid
+        int32_t ud = (cellY != 0) ? -m_CellsAcross : (m_CellsAcross * (m_CellsAcross - 1)); // if on top, add size of grid
+        int32_t dd = (cellY != m_CellsAcross - 1) ? m_CellsAcross : -static_cast<int32_t>(m_CellsAcross * (m_CellsAcross - 1)); // if on bottom, subtract size of grid
+        
+        // Create our list by moving our cell's index in all of these directions
+        neighbors[0] = particle.CellIndex + ld + ud;
+        neighbors[1] = particle.CellIndex      + ud;
+        neighbors[2] = particle.CellIndex + rd + ud;
+        neighbors[3] = particle.CellIndex + ld     ;
+        neighbors[4] = particle.CellIndex          ;
+        neighbors[5] = particle.CellIndex + rd     ;
+        neighbors[6] = particle.CellIndex + ld + dd;
+        neighbors[7] = particle.CellIndex      + dd;
+        neighbors[8] = particle.CellIndex + rd + dd;
+      }
+      
+      // Iterate over these neighbors
+      for (std::size_t neighbor = 0; neighbor < numNeighbors; neighbor++)
+      {
+        int32_t cellIndex = neighbors[neighbor];
+        Cell& cell = m_Cells[cellIndex];
+        
+        for (std::size_t j = 0; j < cell.Particles.size(); j++)
+        {
+          std::size_t otherID = cell.Particles[j];
+          if (particle.ID == otherID) continue;
+          Particle& other = m_Particles[otherID];
+          
+          particle.NetForce += ForceFunction(particle, other, matrix);
+        }
       }
     }
+  };
+  
+  // Spawn our job threads
+  constexpr static std::size_t numWorkers = 16;
+  std::size_t particlesPerWorker = m_Particles.size() / numWorkers + 1; // integer division, add 1 (cover all)
+  
+  std::thread workers[numWorkers];
+  for (std::size_t i = 0; i < numWorkers; i++)
+  {
+    std::size_t start = i * particlesPerWorker;
+    std::size_t end = start + (particlesPerWorker - 1);
+    end = (end >= m_Particles.size()) ? m_Particles.size() - 1 : end; // cap end at last particle.
+    
+    workers[i] = std::thread(jobFunc, start, end);
+  }
+  
+  // Wait for our workers
+  for (std::size_t i = 0; i < numWorkers; i++)
+  {
+    workers[i].join();
   }
 }
 
