@@ -1,6 +1,5 @@
 #include "System.h"
 
-#include <cmath>
 #include <glm/gtc/random.hpp>
 #include <thread>
 
@@ -179,21 +178,25 @@ glm::vec2 System::ForceFunction(const Particle& particle, const Particle& other,
   if (delta.y < -m_Size) delta.y += 2.0f * m_Size;
   
   float distance = glm::length(delta);
-  glm::vec2 direction = delta / distance;
-  float relDistance = distance / m_InteractionRadius;
   
-  float relForceStrength = 0.0f;
-  if (relDistance <= m_RepulsionRadius)
+  if (distance <= m_RepulsionRadius * m_InteractionRadius)
   {
-    relForceStrength = (relDistance / m_RepulsionRadius - 1);
+    float forceStrength = (distance / m_RepulsionRadius - m_InteractionRadius);
+    glm::vec2 dir = delta / distance;
+    return forceStrength * dir;
   }
-  else if (relDistance <= 1.0f)
+  else if (distance <= m_InteractionRadius)
   {
-    relForceStrength = 1.0f - glm::abs(2.0f * relDistance - 1.0f - m_RepulsionRadius) / (1.0f - m_RepulsionRadius);
-    relForceStrength *= matrix.GetAttractionScale(particle.Color, other.Color);
+    float forceStrength = m_InteractionRadius - glm::abs((2.0f * distance - m_InteractionRadius - m_RepulsionRadius * m_InteractionRadius) / (1.0f - m_RepulsionRadius));
+    forceStrength *= matrix.GetAttractionScale(particle.Color, other.Color);
+    glm::vec2 dir = delta / distance;
+    
+    return forceStrength * dir;
   }
-  
-  return (m_InteractionRadius * relForceStrength) * direction;
+  else
+  {
+    return { 0.0f, 0.0f };
+  }
 }
 
 
