@@ -4,8 +4,9 @@
 #include <glad/glad.h>
 
 #include "Camera.h"
-#include "Particle.h"
-#include "ColorMatrix.h"
+
+#include "simulation/Particle.h"
+#include "simulation/ColorMatrix.h"
 
 namespace Speck
 {

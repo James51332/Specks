@@ -3,10 +3,10 @@
 #include <string>
 #include <SDL.h>
 
-#include "Renderer.h"
-#include "Camera.h"
-#include "System.h"
-#include "ColorMatrix.h"
+#include "renderer/Renderer.h"
+#include "renderer/Renderer.h"
+#include "simulation/System.h"
+#include "simulation/ColorMatrix.h"
 
 namespace Speck
 {

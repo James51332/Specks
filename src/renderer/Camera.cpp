@@ -3,7 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <SDL.h>
 
-#include "Input.h"
+#include "app/Input.h"
 
 namespace Speck
 {

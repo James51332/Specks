@@ -4,8 +4,6 @@
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Input.h"
-
 namespace Speck
 {
 

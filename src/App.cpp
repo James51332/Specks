@@ -3,7 +3,7 @@
 #include <iostream>
 #include <glad/glad.h>
 
-#include "Input.h"
+#include "app/Input.h"
 
 namespace Speck
 {
