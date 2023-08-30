@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 
 #include "Camera.h"
+#include "Shader.h"
 
 #include "simulation/Particle.h"
 #include "simulation/ColorMatrix.h"
@@ -40,7 +41,7 @@ private:
   // General Rendering Data
   GLuint m_QuadVBO, m_QuadIBO;
   GLuint m_ParticleVAO, m_BackgroundVAO;
-  GLuint m_ParticleShader, m_BackgroundShader;
+  Shader *m_ParticleShader, *m_BackgroundShader;
   
   // Particle Instancing Data
   struct InstancedVertex

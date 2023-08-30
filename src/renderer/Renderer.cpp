@@ -123,13 +123,11 @@ void Renderer::BeginFrame(Camera* camera, float systemBoundSize)
   m_InFrame = true;
   m_Camera = camera;
   
-  glUseProgram(m_BackgroundShader);
-  GLuint uniform = glGetUniformLocation(m_BackgroundShader, "u_ViewProjection");
-  glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_Camera->GetViewProjectionMatrix()[0][0]);
-  
-  uniform = glGetUniformLocation(m_BackgroundShader, "u_Transform");
+  m_BackgroundShader->Use();
+  m_BackgroundShader->UploadUniformMat4(&m_Camera->GetViewProjectionMatrix()[0][0], "u_ViewProjection");
+
   glm::mat4 transform = glm::scale(glm::mat4(1.0f), glm::vec3(systemBoundSize, systemBoundSize, 1.0f));
-  glUniformMatrix4fv(uniform, 1, GL_FALSE, &transform[0][0]);
+  m_BackgroundShader->UploadUniformMat4(&transform[0][0], "u_Transform");
   
   glBindVertexArray(m_BackgroundVAO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIBO);
@@ -185,9 +183,8 @@ void Renderer::EndFrame()
 void Renderer::Flush()
 {
   // Upload the camera matrix and use the shader program
-  glUseProgram(m_ParticleShader);
-  GLint uniform = glGetUniformLocation(m_ParticleShader, "u_ViewProjection");
-  glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_Camera->GetViewProjectionMatrix()[0][0]);
+  m_ParticleShader->Use();
+  m_ParticleShader->UploadUniformMat4(&m_Camera->GetViewProjectionMatrix()[0][0], "u_ViewProjection");
   
   // Copy the instanced buffers to the instanced vbos
   glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
@@ -284,98 +281,8 @@ void Renderer::GenerateArrays()
 
 void Renderer::GenerateShaders()
 {
-  // Build the particle shader program
-  {
-    GLuint vs, fs;
-  	vs = glCreateShader(GL_VERTEX_SHADER);
-  	glShaderSource(vs, 1, &particleVertex, nullptr);
-  	glCompileShader(vs);
-
-  	fs = glCreateShader(GL_FRAGMENT_SHADER);
-  	glShaderSource(fs, 1, &particleFragment, nullptr);
-  	glCompileShader(fs);
-
-  	// Check for success
-  	int success;
-  	char infoLog[512];
-  	glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
-  	if (!success)
-  	{
-  	  glGetShaderInfoLog(vs, 512, NULL, infoLog);
-  	  std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-  	}
-
-  	glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
-  	if (!success)
-  	{
-  	  glGetShaderInfoLog(fs, 512, NULL, infoLog);
-  	  std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-  	}
-
-  	// Combine the shaders into a program and link it
-  	m_ParticleShader = glCreateProgram();
-  	glAttachShader(m_ParticleShader, vs);
-  	glAttachShader(m_ParticleShader, fs);
-  	glLinkProgram(m_ParticleShader);
-
-  	// Check for success
-  	glGetProgramiv(m_ParticleShader, GL_LINK_STATUS, &success);
-  	if (!success) {
-  	  glGetProgramInfoLog(m_ParticleShader, 512, NULL, infoLog);
-  	  std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-  	}
-
-  	// Destroy the shaders we no longer need
-  	glDeleteShader(vs);
-  	glDeleteShader(fs);
-  }
-  
-  // Now create our background shader
-  {
-    GLuint vs, fs;
-    
-    vs = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vs, 1, &backgroundVertex, nullptr);
-    glCompileShader(vs);
-    
-    fs = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fs, 1, &backgroundFragment, nullptr);
-    glCompileShader(fs);
-    
-    // Check for success
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-      glGetShaderInfoLog(vs, 512, NULL, infoLog);
-      std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    
-    glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-      glGetShaderInfoLog(fs, 512, NULL, infoLog);
-      std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    
-    // Combine the shaders into a program and link it
-    m_BackgroundShader = glCreateProgram();
-    glAttachShader(m_BackgroundShader, vs);
-    glAttachShader(m_BackgroundShader, fs);
-    glLinkProgram(m_BackgroundShader);
-    
-    // Check for success
-    glGetProgramiv(m_BackgroundShader, GL_LINK_STATUS, &success);
-    if (!success) {
-      glGetProgramInfoLog(m_BackgroundShader, 512, NULL, infoLog);
-      std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    
-    // Destroy the shaders we no longer need
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-  }
+  m_ParticleShader = new Shader(particleVertex, particleFragment);
+  m_BackgroundShader = new Shader(backgroundVertex, backgroundFragment);
 }
 
 void Renderer::DestroyBuffers()
@@ -395,8 +302,8 @@ void Renderer::DestroyArrays()
 
 void Renderer::DestroyShaders()
 {
-  glDeleteProgram(m_ParticleShader);
-  glDeleteProgram(m_BackgroundShader);
+  delete m_ParticleShader;
+  delete m_BackgroundShader;
 }
 
 }
