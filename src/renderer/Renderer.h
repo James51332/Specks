@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "Buffer.h"
+#include "VertexArray.h"
 
 #include "simulation/Particle.h"
 #include "simulation/ColorMatrix.h"
@@ -40,7 +41,7 @@ private:
 
 private:
   // General Rendering Data
-  GLuint m_ParticleVAO, m_BackgroundVAO;
+  VertexArray *m_ParticleVAO, *m_BackgroundVAO;
   Buffer *m_QuadVBO, *m_QuadIBO;
   Shader *m_ParticleShader, *m_BackgroundShader;
   

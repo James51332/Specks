@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <glad/glad.h>
 
+#include "BufferLayout.h"
+
 namespace Speck
 {
 
@@ -12,6 +14,7 @@ struct BufferDesc
   GLenum Usage;
   std::size_t Size;
   void* Data;
+  BufferLayout Layout; // Only needed for vertex buffers
 };
 
 class Buffer
@@ -23,6 +26,8 @@ public:
   void SetData(void* data, std::size_t size);
 
   void Bind();
+
+  const BufferLayout& GetLayout() const { return m_Desc.Layout; }
 
 private:
   GLuint m_Object;

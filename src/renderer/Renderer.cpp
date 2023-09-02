@@ -129,7 +129,7 @@ void Renderer::BeginFrame(Camera* camera, float systemBoundSize)
   glm::mat4 transform = glm::scale(glm::mat4(1.0f), glm::vec3(systemBoundSize, systemBoundSize, 1.0f));
   m_BackgroundShader->UploadUniformMat4(&transform[0][0], "u_Transform");
   
-  glBindVertexArray(m_BackgroundVAO);
+  m_BackgroundVAO->Bind();
   m_QuadIBO->Bind();
   glDrawElements(GL_TRIANGLES, sizeof(quadIndices) / sizeof(quadIndices[0]), GL_UNSIGNED_SHORT, nullptr);
 }
@@ -187,11 +187,10 @@ void Renderer::Flush()
   m_ParticleShader->UploadUniformMat4(&m_Camera->GetViewProjectionMatrix()[0][0], "u_ViewProjection");
   
   // Copy the instanced buffers to the instanced vbos
-  m_InstancedVBO->Bind();
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(InstancedVertex) * m_Particles, m_InstancedBuffer);
+  m_InstancedVBO->SetData(m_InstancedBuffer, sizeof(InstancedVertex) * m_Particles);
   
   // Display the instances
-  glBindVertexArray(m_ParticleVAO);
+  m_ParticleVAO->Bind();
   m_QuadIBO->Bind();
   glDrawElementsInstanced(GL_TRIANGLES, sizeof(quadIndices) / sizeof(quadIndices[0]), GL_UNSIGNED_SHORT, nullptr, m_Particles);
   
@@ -216,6 +215,10 @@ void Renderer::GenerateBuffers()
     vboDesc.Usage = GL_STATIC_DRAW;
     vboDesc.Size = sizeof(quadVertices);
     vboDesc.Data = (void*)quadVertices;
+    vboDesc.Layout = {
+      {ShaderDataType::Float3, "a_Position"},
+      {ShaderDataType::Float2, "a_UV"}
+    };
 
     m_QuadVBO = new Buffer(vboDesc);
 
@@ -235,6 +238,10 @@ void Renderer::GenerateBuffers()
     instancedDesc.Usage = GL_DYNAMIC_DRAW;
     instancedDesc.Size = m_MaxParticles * sizeof(InstancedVertex);
     instancedDesc.Data = nullptr;
+    instancedDesc.Layout = {
+        {ShaderDataType::Float2, "a_InstancedPosition", false, 1},
+        {ShaderDataType::Float4, "a_InstancedColor", false, 1}
+    };
 
     m_InstancedVBO = new Buffer(instancedDesc);
   	
@@ -245,47 +252,14 @@ void Renderer::GenerateBuffers()
 
 void Renderer::GenerateArrays()
 {
-  // Create our particle vertex array
-  {
-    glGenVertexArrays(1, &m_ParticleVAO);
-    
-    // Attach our vbo to our vao and define the vertex layout
-    glBindVertexArray(m_ParticleVAO);
-    m_QuadVBO->Bind();
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)sizeof(glm::vec3));
-    glEnableVertexAttribArray(1);
-    
-    // Attach our instanced buffers and define the layout and increment
-    glBindVertexArray(m_ParticleVAO);
-    m_InstancedVBO->Bind();
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(InstancedVertex), (void*)0);
-    glEnableVertexAttribArray(2);
-    glVertexAttribDivisor(2, 1);
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertex), (void*)sizeof(glm::vec2));
-    glEnableVertexAttribArray(3);
-    glVertexAttribDivisor(3, 1);
-    
-    // Unbind our vao
-    glBindVertexArray(0);
-  }
+  // Create our particle vertex array and attach buffers
+  m_ParticleVAO = new VertexArray();
+  m_ParticleVAO->AttachBuffer(m_QuadVBO);
+  m_ParticleVAO->AttachBuffer(m_InstancedVBO);
   
   // Create our background vertex array
-  {
-    glGenVertexArrays(1, &m_BackgroundVAO);
-    glBindVertexArray(m_BackgroundVAO);
-    
-    // Attach our vbo to vao and define the layout
-    m_QuadVBO->Bind();
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (const void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (const void*)sizeof(glm::vec3));
-    glEnableVertexAttribArray(1);
-    
-    // Unbind
-    glBindVertexArray(0);
-  }
+  m_BackgroundVAO = new VertexArray();
+  m_BackgroundVAO->AttachBuffer(m_QuadVBO);
 }
 
 void Renderer::GenerateShaders()
@@ -304,8 +278,8 @@ void Renderer::DestroyBuffers()
 
 void Renderer::DestroyArrays()
 {
-  glDeleteVertexArrays(1, &m_ParticleVAO);
-  glDeleteVertexArrays(1, &m_BackgroundVAO);
+  delete m_ParticleVAO;
+  delete m_BackgroundVAO;
 }
 
 void Renderer::DestroyShaders()
