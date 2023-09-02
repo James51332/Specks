@@ -5,6 +5,7 @@
 
 #include "Camera.h"
 #include "Shader.h"
+#include "Buffer.h"
 
 #include "simulation/Particle.h"
 #include "simulation/ColorMatrix.h"
@@ -39,8 +40,8 @@ private:
 
 private:
   // General Rendering Data
-  GLuint m_QuadVBO, m_QuadIBO;
   GLuint m_ParticleVAO, m_BackgroundVAO;
+  Buffer *m_QuadVBO, *m_QuadIBO;
   Shader *m_ParticleShader, *m_BackgroundShader;
   
   // Particle Instancing Data
@@ -50,7 +51,7 @@ private:
     glm::vec4 Color;
   };
   
-  GLuint m_InstancedVBO;
+  Buffer* m_InstancedVBO;
   InstancedVertex* m_InstancedBuffer;
   std::size_t m_Particles = 0, m_MaxParticles = 10000;
   

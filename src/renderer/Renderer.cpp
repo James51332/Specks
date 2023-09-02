@@ -130,7 +130,7 @@ void Renderer::BeginFrame(Camera* camera, float systemBoundSize)
   m_BackgroundShader->UploadUniformMat4(&transform[0][0], "u_Transform");
   
   glBindVertexArray(m_BackgroundVAO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIBO);
+  m_QuadIBO->Bind();
   glDrawElements(GL_TRIANGLES, sizeof(quadIndices) / sizeof(quadIndices[0]), GL_UNSIGNED_SHORT, nullptr);
 }
 
@@ -187,12 +187,12 @@ void Renderer::Flush()
   m_ParticleShader->UploadUniformMat4(&m_Camera->GetViewProjectionMatrix()[0][0], "u_ViewProjection");
   
   // Copy the instanced buffers to the instanced vbos
-  glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
+  m_InstancedVBO->Bind();
   glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(InstancedVertex) * m_Particles, m_InstancedBuffer);
   
   // Display the instances
   glBindVertexArray(m_ParticleVAO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIBO);
+  m_QuadIBO->Bind();
   glDrawElementsInstanced(GL_TRIANGLES, sizeof(quadIndices) / sizeof(quadIndices[0]), GL_UNSIGNED_SHORT, nullptr, m_Particles);
   
   // Reset the particle count
@@ -211,23 +211,32 @@ void Renderer::GenerateBuffers()
 {
   // Create our quad vertex buffer and index buffer
   {
-  	glGenBuffers(1, &m_QuadVBO);
-  	glBindBuffer(GL_ARRAY_BUFFER, m_QuadVBO);
-  	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-  	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    BufferDesc vboDesc;
+    vboDesc.Type = GL_ARRAY_BUFFER;
+    vboDesc.Usage = GL_STATIC_DRAW;
+    vboDesc.Size = sizeof(quadVertices);
+    vboDesc.Data = (void*)quadVertices;
 
-  	glGenBuffers(1, &m_QuadIBO);
-  	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_QuadIBO);
-  	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
-  	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    m_QuadVBO = new Buffer(vboDesc);
+
+    BufferDesc iboDesc;
+    iboDesc.Type = GL_ELEMENT_ARRAY_BUFFER;
+    iboDesc.Usage = GL_STATIC_DRAW;
+    iboDesc.Size = sizeof(quadIndices);
+    iboDesc.Data = (void*)quadIndices;
+
+    m_QuadIBO = new Buffer(iboDesc);
   }
 
   // Create our particle instance vertex buffers
   {
-  	glGenBuffers(1, &m_InstancedVBO);
-  	glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
-  	glBufferData(GL_ARRAY_BUFFER, m_MaxParticles * sizeof(InstancedVertex), nullptr, GL_DYNAMIC_DRAW);
-  	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    BufferDesc instancedDesc;
+    instancedDesc.Type = GL_ARRAY_BUFFER;
+    instancedDesc.Usage = GL_DYNAMIC_DRAW;
+    instancedDesc.Size = m_MaxParticles * sizeof(InstancedVertex);
+    instancedDesc.Data = nullptr;
+
+    m_InstancedVBO = new Buffer(instancedDesc);
   	
   	// Allocate the cpu buffer that we'll write to and copy from
     m_InstancedBuffer = new InstancedVertex[m_MaxParticles];
@@ -242,7 +251,7 @@ void Renderer::GenerateArrays()
     
     // Attach our vbo to our vao and define the vertex layout
     glBindVertexArray(m_ParticleVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_QuadVBO);
+    m_QuadVBO->Bind();
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)sizeof(glm::vec3));
@@ -250,7 +259,7 @@ void Renderer::GenerateArrays()
     
     // Attach our instanced buffers and define the layout and increment
     glBindVertexArray(m_ParticleVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_InstancedVBO);
+    m_InstancedVBO->Bind();
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(InstancedVertex), (void*)0);
     glEnableVertexAttribArray(2);
     glVertexAttribDivisor(2, 1);
@@ -268,7 +277,7 @@ void Renderer::GenerateArrays()
     glBindVertexArray(m_BackgroundVAO);
     
     // Attach our vbo to vao and define the layout
-    glBindBuffer(GL_ARRAY_BUFFER, m_QuadVBO);
+    m_QuadVBO->Bind();
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (const void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (const void*)sizeof(glm::vec3));
@@ -287,10 +296,9 @@ void Renderer::GenerateShaders()
 
 void Renderer::DestroyBuffers()
 {
-  glDeleteBuffers(1, &m_QuadVBO);
-  glDeleteBuffers(1, &m_QuadIBO);
-  
-  glDeleteBuffers(1, &m_InstancedVBO);
+  delete m_QuadVBO;
+  delete m_QuadIBO;
+  delete m_InstancedVBO;
   delete[] m_InstancedBuffer;
 }
 
