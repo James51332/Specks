@@ -1,5 +1,5 @@
 # Basic Info
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.20)
 
 # Set the C++ Standard
 set (CMAKE_CXX_STANDARD 20)
@@ -13,6 +13,7 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_subdirectory(vendor/sdl2 EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/glad EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/glm EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/imgui EXCLUDE_FROM_ALL)
 
 # Source Files
 file(GLOB_RECURSE SRC_FILES CMAKE_CONFIGURE_DEPENDS "src/*.cpp" "src/*.h")
@@ -24,4 +25,9 @@ include_directories(Specks ${CMAKE_SOURCE_DIR}/src)
 add_executable(Specks ${SRC_FILES})
 
 # Link to the SDL library
-target_link_libraries(Specks PRIVATE SDL3::SDL3 glad glm::glm)
+target_link_libraries(Specks 
+                        PRIVATE 
+                          SDL3::SDL3 
+                          glad 
+                          glm::glm
+                          ImGui)
