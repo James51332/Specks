@@ -16,6 +16,7 @@ enum class ShaderDataType
   Float2,
   Float3,
   Float4,
+  UByte4
 };
 
 inline float ShaderDataTypeSize(ShaderDataType type)
@@ -30,6 +31,8 @@ inline float ShaderDataTypeSize(ShaderDataType type)
       return 4 * 3;
     case ShaderDataType::Float4:
       return 4 * 4;
+    case ShaderDataType::UByte4:
+      return 4 * 1;
     default:
       return 0;
   }
@@ -46,6 +49,7 @@ inline GLint ShaderDataTypeCount(ShaderDataType type)
     case ShaderDataType::Float3:
       return 3;
     case ShaderDataType::Float4:
+    case ShaderDataType::UByte4:
       return 4;
     default:
       return 0;

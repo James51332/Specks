@@ -18,6 +18,22 @@ void VertexArray::Bind()
   glBindVertexArray(m_Object);
 }
 
+static GLenum GLenumFromShaderDataType(ShaderDataType type)
+{
+  switch (type)
+  {
+    case ShaderDataType::Float: 
+    case ShaderDataType::Float2:
+    case ShaderDataType::Float3:
+    case ShaderDataType::Float4:
+      return GL_FLOAT;
+    case ShaderDataType::UByte4:
+      return GL_UNSIGNED_BYTE;
+    default:
+      return GL_FLOAT;
+  }
+}
+
 void VertexArray::AttachBuffer(Buffer* buffer)
 {
   const BufferLayout& layout = buffer->GetLayout();
@@ -29,7 +45,7 @@ void VertexArray::AttachBuffer(Buffer* buffer)
   {
     glVertexAttribPointer(m_CurrentAttrib, 
                           ShaderDataTypeCount(element.Type), 
-                          GL_FLOAT, 
+                          GLenumFromShaderDataType(element.Type), 
                           element.Normalized, 
                           layout.Stride, 
                           (void*)element.Offset);

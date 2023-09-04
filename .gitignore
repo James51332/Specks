@@ -4,6 +4,9 @@
 # VS Code
 .vscode
 
+# ImGui
+*.ini
+
 # Build Files
 bin
 build

@@ -161,10 +161,12 @@ void System::BoundPositions()
   for (std::size_t i = 0; i < m_Particles.size(); i++)
   {
     glm::vec2& position = m_Particles[i].Position;
-    if (position.x > m_Size) position.x -= 2.0f * m_Size;
-    if (position.x < -m_Size) position.x += 2.0f * m_Size;
-    if (position.y > m_Size) position.y -= 2.0f * m_Size;
-    if (position.y < -m_Size) position.y += 2.0f * m_Size;
+
+    // We force them to move to edge because velocity can get out of hand when paused for long time.
+    if (position.x > m_Size) position.x = -m_Size;
+    if (position.x < -m_Size) position.x = m_Size;
+    if (position.y > m_Size) position.y = -m_Size;
+    if (position.y < -m_Size) position.y = m_Size;
   }
 }
 

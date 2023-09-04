@@ -4,9 +4,9 @@
 #include <SDL.h>
 
 #include "renderer/Renderer.h"
-#include "renderer/Renderer.h"
 #include "simulation/System.h"
 #include "simulation/ColorMatrix.h"
+#include "ui/ImGuiRenderer.h"
 
 namespace Speck
 {
@@ -31,6 +31,7 @@ private:
   std::string m_Name;
 
   Renderer* m_Renderer = nullptr;
+  ImGuiRenderer* m_UIRenderer = nullptr;
   Camera* m_Camera = nullptr;
   System* m_System = nullptr;
   ColorMatrix m_ColorMatrix = ColorMatrix(5);

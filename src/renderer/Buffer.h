@@ -24,6 +24,7 @@ public:
   ~Buffer();
 
   void SetData(void* data, std::size_t size);
+  void Resize(std::size_t size); // Resizes but doesn't give data to gpu
 
   void Bind();
 

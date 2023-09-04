@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <glad/glad.h>
+#include <imgui.h>
 
 #include "app/Input.h"
 
@@ -62,6 +63,10 @@ void App::Run()
     m_Renderer->BeginFrame(m_Camera, m_System->GetBoundingBoxSize());
     m_Renderer->DrawParticles(m_System->GetParticles(), m_ColorMatrix);
     m_Renderer->EndFrame();
+
+    m_UIRenderer->Begin();
+    ImGui::ShowDemoWindow();
+    m_UIRenderer->End();
     
     SDL_GL_SwapWindow(m_Window);
   }
@@ -91,6 +96,7 @@ void App::Init(int w, int h)
   // Initialize the renderer
   float displayScale = SDL_GetWindowDisplayScale(m_Window);
   m_Renderer = new Renderer(static_cast<float>(w), static_cast<float>(h), displayScale);
+  m_UIRenderer = new ImGuiRenderer(static_cast<float>(w), static_cast<float>(h), displayScale);
   m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 550.0f);
   
   // Initialize the input manager
@@ -111,6 +117,7 @@ void App::Shutdown()
   delete m_Camera;
   delete m_System;
   delete m_Renderer;
+  delete m_UIRenderer;
   
   SDL_GL_DeleteContext(m_Context);
   m_Context = nullptr;
@@ -135,6 +142,7 @@ void App::PollEvents()
         float height = static_cast<float>(event.window.data2);
         m_Camera->SetWindowSize(width, height);
         m_Renderer->Resize(width, height);
+        m_UIRenderer->Resize(width, height);
         break;
       }
       case SDL_EVENT_QUIT:
