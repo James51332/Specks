@@ -5,6 +5,7 @@
 #include <imgui.h>
 
 #include "app/Input.h"
+#include "ui/UIInput.h"
 
 namespace Speck
 {
@@ -134,6 +135,12 @@ void App::PollEvents()
   SDL_Event event;
   while (SDL_PollEvent(&event))
   {
+    // We let our UI library block events to the app if it uses them
+    // This won't interfere with app events, but it still may be more 
+    // logical to process app events before passing to the UI library.
+    bool processed = UI::ProcessEvent(&event);
+    if (processed) continue;
+
     switch (event.type)
     {
       case SDL_EVENT_WINDOW_RESIZED:
