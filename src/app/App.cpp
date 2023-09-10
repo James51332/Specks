@@ -65,8 +65,31 @@ void App::Run()
     m_Renderer->DrawParticles(m_System->GetParticles(), m_ColorMatrix);
     m_Renderer->EndFrame();
 
+    // Render our UI (We'll abstract later)
     m_UIRenderer->Begin();
-    ImGui::ShowDemoWindow();
+    ImGui::Begin("Settings");
+
+    // Color Matrix UI
+    std::size_t colors = m_ColorMatrix.GetNumColors();
+    ImGui::SeparatorText("Color Matrix");
+    if (ImGui::BeginTable("table1", colors, ImGuiTableFlags_Borders))
+    {
+      for (int row = 0; row < colors; row++)
+      {
+        ImGui::TableNextRow();
+        for (int column = 0; column < colors; column++)
+        {
+          ImGui::TableSetColumnIndex(column);
+          ImGui::Text("%.2f", m_ColorMatrix.GetAttractionScale(row, column));
+        }
+      }
+      ImGui::EndTable();
+    }
+
+    // Simulation Settings UI
+    ImGui::SeparatorText("Simulation");
+
+    ImGui::End();
     m_UIRenderer->End();
     
     SDL_GL_SwapWindow(m_Window);
