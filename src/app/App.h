@@ -21,7 +21,7 @@ public:
   void Run();
 
 private:
-  void Init(int w = 800, int h = 600);
+  void Init(int w = 1280, int h = 720);
   void Shutdown();
 
   void PollEvents();
@@ -34,7 +34,7 @@ private:
   ImGuiRenderer* m_UIRenderer = nullptr;
   Camera* m_Camera = nullptr;
   System* m_System = nullptr;
-  ColorMatrix m_ColorMatrix = ColorMatrix(5);
+  ColorMatrix m_ColorMatrix;
 
   SDL_Window* m_Window = nullptr;
   SDL_GLContext m_Context = nullptr;

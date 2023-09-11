@@ -7,6 +7,8 @@
 #include "app/Input.h"
 #include "ui/UIInput.h"
 
+#include "ui/Shapes.h"
+
 namespace Speck
 {
 
@@ -71,16 +73,42 @@ void App::Run()
 
     // Color Matrix UI
     std::size_t colors = m_ColorMatrix.GetNumColors();
+
     ImGui::SeparatorText("Color Matrix");
-    if (ImGui::BeginTable("table1", colors, ImGuiTableFlags_Borders))
+    if (ImGui::BeginTable("color_matrix", colors + 1))
     {
+      // Color Matrix Headers
+      {
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+
+        for (std::size_t column = 1; column < colors + 1; column++)
+        {
+          ImGui::TableSetColumnIndex(column);
+          glm::vec4 col = m_ColorMatrix.GetColor(column - 1);
+          UI::Circle(8.0f, ImGui::GetColorU32({col.r, col.g, col.b, col.a}));
+        }
+      }
+
       for (int row = 0; row < colors; row++)
       {
         ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        
+        // Circle
+        glm::vec4 col = m_ColorMatrix.GetColor(row);
+        UI::Circle(8.0f, ImGui::GetColorU32({col.r, col.g, col.b, col.a}));
+
         for (int column = 0; column < colors; column++)
         {
-          ImGui::TableSetColumnIndex(column);
-          ImGui::Text("%.2f", m_ColorMatrix.GetAttractionScale(row, column));
+          ImGui::TableSetColumnIndex(column + 1);
+    
+          float scale = m_ColorMatrix.GetAttractionScale(row, column);
+          ImGui::Text("%.2f", scale);
+
+          // Convert Scale to a Color
+          if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) m_ColorMatrix.SetAttractionScale(row, column, scale + 0.1f);
+          if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) m_ColorMatrix.SetAttractionScale(row, column, scale - 0.1f);
         }
       }
       ImGui::EndTable();
@@ -88,6 +116,8 @@ void App::Run()
 
     // Simulation Settings UI
     ImGui::SeparatorText("Simulation");
+
+    if (ImGui::Button("Play/Pause (Space)")) updateSim = !updateSim;
 
     ImGui::End();
     m_UIRenderer->End();
@@ -128,6 +158,7 @@ void App::Init(int w, int h)
   
   // Setup the particle system
   m_System = new System(2500, 5, 500.0f);
+  m_ColorMatrix = ColorMatrix(5);
   m_ColorMatrix.SetColor(0, { 1.0f, 1.0f, 0.0f, 1.0f });
   m_ColorMatrix.SetColor(1, { 0.0f, 1.0f, 1.0f, 1.0f });
   m_ColorMatrix.SetColor(2, { 1.0f, 0.0f, 1.0f, 1.0f });

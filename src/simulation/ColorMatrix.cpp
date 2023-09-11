@@ -6,7 +6,7 @@ namespace Speck
 {
 
 ColorMatrix::ColorMatrix(int numColors)
-  : m_Colors(numColors, glm::vec4(1.0f)), m_AttractionScales(25, 0.0f)
+  : m_Colors(numColors, glm::vec4(1.0f)), m_AttractionScales(numColors * numColors, 0.0f)
 {
   // Set the seed to the time so that the generator doesn't produce the same results
   srand(time(0));

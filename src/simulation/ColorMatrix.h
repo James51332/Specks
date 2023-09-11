@@ -9,7 +9,7 @@ namespace Speck
 class ColorMatrix
 {
 public:
-  ColorMatrix(int numColors);
+  ColorMatrix(int numColors = 0);
 
   std::size_t GetNumColors() const { return m_Colors.size(); }
 
