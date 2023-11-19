@@ -16,7 +16,7 @@ ColorMatrix::ColorMatrix(int numColors)
   {
     for (std::size_t j = 0; j < numColors; j++)
     {
-      m_AttractionScales[i * numColors + j] = glm::gaussRand(0.0f, 1.0f);
+      m_AttractionScales[i * numColors + j] = glm::clamp(glm::gaussRand(0.0f, 0.5f), -1.0f, 1.0f);
     }
   }
 }

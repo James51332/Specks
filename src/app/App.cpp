@@ -3,11 +3,12 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <imgui.h>
+#include <chrono>
 
 #include "app/Input.h"
 #include "ui/UIInput.h"
 
-#include "ui/Shapes.h"
+#include "ui/Settings.h"
 
 namespace Speck
 {
@@ -35,7 +36,7 @@ void App::Run()
 {
   // Initialization code
   Init();
-  float lastTime = static_cast<float>(SDL_GetTicks());
+  auto lastTime = std::chrono::high_resolution_clock::now();
 
   // Run Loop
   m_Running = true;
@@ -45,8 +46,9 @@ void App::Run()
     PollEvents();
     
     // Calculate timestep since last frame (ms to s)
-    float curTime = static_cast<float>(SDL_GetTicks());
-    float timestep = (curTime - lastTime) * 0.001f;
+    auto curTime = std::chrono::high_resolution_clock::now();
+    float timestepMilliseconds = std::chrono::duration<float, std::chrono::milliseconds::period>(curTime - lastTime).count();
+    auto timestep = timestepMilliseconds * 0.001f;
     lastTime = curTime;
 
     // Update simulation
@@ -63,62 +65,29 @@ void App::Run()
     glClearColor(0.2f, 0.2f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    // Render our particles
     m_Renderer->BeginFrame(m_Camera, m_System->GetBoundingBoxSize());
     m_Renderer->DrawParticles(m_System->GetParticles(), m_ColorMatrix);
     m_Renderer->EndFrame();
 
-    // Render our UI (We'll abstract later)
+    // Render our UI
     m_UIRenderer->Begin();
     ImGui::Begin("Settings");
-
-    // Color Matrix UI
-    std::size_t colors = m_ColorMatrix.GetNumColors();
-
-    ImGui::SeparatorText("Color Matrix");
-    if (ImGui::BeginTable("color_matrix", colors + 1))
     {
-      // Color Matrix Headers
-      {
-        ImGui::TableNextRow();
-        ImGui::TableNextColumn();
+      // Color Matrix UI
+      ImGui::SeparatorText("Color Matrix");
+      UI::DisplayColorMatrix(m_ColorMatrix);
 
-        for (std::size_t column = 1; column < colors + 1; column++)
-        {
-          ImGui::TableSetColumnIndex(column);
-          glm::vec4 col = m_ColorMatrix.GetColor(column - 1);
-          UI::Circle(8.0f, ImGui::GetColorU32({col.r, col.g, col.b, col.a}));
-        }
-      }
+      // Simulation Settings UI
+      ImGui::SeparatorText("Simulation");
+      
+      ImGui::Text("Debug Info");
+      ImGui::Text("Frame Time: %.2fms", timestepMilliseconds);
 
-      for (int row = 0; row < colors; row++)
-      {
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        
-        // Circle
-        glm::vec4 col = m_ColorMatrix.GetColor(row);
-        UI::Circle(8.0f, ImGui::GetColorU32({col.r, col.g, col.b, col.a}));
+      ImGui::Spacing();
 
-        for (int column = 0; column < colors; column++)
-        {
-          ImGui::TableSetColumnIndex(column + 1);
-    
-          float scale = m_ColorMatrix.GetAttractionScale(row, column);
-          ImGui::Text("%.2f", scale);
-
-          // Convert Scale to a Color
-          if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) m_ColorMatrix.SetAttractionScale(row, column, scale + 0.1f);
-          if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) m_ColorMatrix.SetAttractionScale(row, column, scale - 0.1f);
-        }
-      }
-      ImGui::EndTable();
+      if (ImGui::Button("Play/Pause (Space)")) updateSim = !updateSim;
     }
-
-    // Simulation Settings UI
-    ImGui::SeparatorText("Simulation");
-
-    if (ImGui::Button("Play/Pause (Space)")) updateSim = !updateSim;
-
     ImGui::End();
     m_UIRenderer->End();
     
@@ -145,7 +114,7 @@ void App::Init(int w, int h)
   SDL_GL_MakeCurrent(m_Window, m_Context);
   
   // Disable VSync
-  SDL_GL_SetSwapInterval(0);
+  SDL_GL_SetSwapInterval(1);
   
   // Initialize the renderer
   float displayScale = SDL_GetWindowDisplayScale(m_Window);
