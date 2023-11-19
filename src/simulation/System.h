@@ -25,8 +25,12 @@ public:
   
   const std::vector<Particle>& GetParticles() const { return m_Particles; }
   float GetBoundingBoxSize() const { return m_Size; }
-  
+  float GetInteractionRadius() const { return m_InteractionRadius; }
+
+  float SetInteractionRadius(float radius = 40.0f) { m_InteractionRadius = radius; AllocateCells(); }
+
 private:
+  void AllocateCells();
   void PartitionsParticles();
   void CalculateForces(const ColorMatrix& matrix);
   void UpdatePositions(float timestep);

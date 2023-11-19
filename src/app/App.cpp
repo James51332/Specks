@@ -56,7 +56,9 @@ void App::Run()
     if (Input::KeyPress(SDL_SCANCODE_SPACE)) updateSim = !updateSim;
     
     if (updateSim)
+    {
   		m_System->Update(m_ColorMatrix, timestep);
+    }
     
     // Update the camera system
     m_Camera->Update(timestep);
@@ -87,6 +89,10 @@ void App::Run()
       ImGui::Spacing();
 
       if (ImGui::Button("Play/Pause (Space)")) updateSim = !updateSim;
+      
+      float interactionRadius = m_System->GetInteractionRadius();
+      if (ImGui::SliderFloat("Interaction Radius", &interactionRadius, 5.0f, 50.0f, "%.1f"))
+        m_System->SetInteractionRadius(interactionRadius);
     }
     ImGui::End();
     m_UIRenderer->End();
@@ -126,13 +132,9 @@ void App::Init(int w, int h)
   Input::Init();
   
   // Setup the particle system
-  m_System = new System(2500, 5, 500.0f);
-  m_ColorMatrix = ColorMatrix(5);
-  m_ColorMatrix.SetColor(0, { 1.0f, 1.0f, 0.0f, 1.0f });
-  m_ColorMatrix.SetColor(1, { 0.0f, 1.0f, 1.0f, 1.0f });
-  m_ColorMatrix.SetColor(2, { 1.0f, 0.0f, 1.0f, 1.0f });
-  m_ColorMatrix.SetColor(3, { 0.5f, 1.0f, 0.8f, 1.0f });
-  m_ColorMatrix.SetColor(4, { 0.8f, 0.2f, 0.5f, 1.0f });
+  m_System = new System(400, 1, 100.0f);
+  m_ColorMatrix = ColorMatrix(1);
+  m_ColorMatrix.SetColor(0, glm::vec4(1.0f));
 }
 
 void App::Shutdown()

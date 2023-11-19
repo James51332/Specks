@@ -9,10 +9,7 @@ namespace Speck
 System::System(std::size_t numParticles, std::size_t numColors, float size)
 	: m_Size(size)
 {
-  // Cells (as close to interaction radius as possible, without being less)
-  m_CellsAcross = static_cast<std::size_t>(2.0f * size / m_InteractionRadius); // truncate, so our cells are slightly bigger than needed
-  m_CellSize = (2.0f * size) / static_cast<float>(m_CellsAcross);
-  m_Cells.resize(m_CellsAcross * m_CellsAcross);
+  AllocateCells();
   
   // Particles
   m_Particles.reserve(numParticles);
@@ -42,6 +39,14 @@ void System::Update(const ColorMatrix& matrix, float timestep)
   CalculateForces(matrix);
   UpdatePositions(timestep);
   BoundPositions();
+}
+
+void System::AllocateCells()
+{
+  // Cells (as close to interaction radius as possible, without being less)
+  m_CellsAcross = static_cast<std::size_t>(2.0f * m_Size / m_InteractionRadius); // truncate, so our cells are slightly bigger than needed
+  m_CellSize = (2.0f * m_Size) / static_cast<float>(m_CellsAcross);
+  m_Cells.resize(m_CellsAcross * m_CellsAcross);
 }
 
 void System::PartitionsParticles()
@@ -124,24 +129,32 @@ void System::CalculateForces(const ColorMatrix& matrix)
     }
   };
   
-  // Spawn our job threads
-  constexpr static std::size_t numWorkers = 16;
-  std::size_t particlesPerWorker = m_Particles.size() / numWorkers + 1; // integer division, add 1 (cover all)
-  
-  std::thread workers[numWorkers];
-  for (std::size_t i = 0; i < numWorkers; i++)
+  // If we have less than 100 particles, the overhead isn't needed, and it's hard to distrubute particles anyways
+  if (m_Particles.size() < 100)
   {
-    std::size_t start = i * particlesPerWorker;
-    std::size_t end = start + (particlesPerWorker - 1);
-    end = (end >= m_Particles.size()) ? m_Particles.size() - 1 : end; // cap end at last particle.
-    
-    workers[i] = std::thread(jobFunc, start, end);
+    jobFunc(0, m_Particles.size() - 1);
   }
-  
-  // Wait for our workers
-  for (std::size_t i = 0; i < numWorkers; i++)
+  else
   {
-    workers[i].join();
+    // Spawn our job threads
+    constexpr static std::size_t numWorkers = 16;
+    std::size_t particlesPerWorker = m_Particles.size() / numWorkers + 1; // integer division, add 1 (cover all)
+
+    std::thread workers[numWorkers];
+    for (std::size_t i = 0; i < numWorkers; i++)
+    {
+      std::size_t start = i * particlesPerWorker;
+      std::size_t end = start + (particlesPerWorker - 1);
+      end = (end >= m_Particles.size()) ? m_Particles.size() - 1 : end; // cap end at last particle.
+
+      workers[i] = std::thread(jobFunc, start, end);
+    }
+
+    // Wait for our workers
+    for (std::size_t i = 0; i < numWorkers; i++)
+    {
+      workers[i].join();
+    }
   }
 }
 

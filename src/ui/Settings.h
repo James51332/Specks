@@ -33,11 +33,6 @@ void DisplayColorMatrix(ColorMatrix& matrix)
   {
     // Matrix Headers
     {
-      ImGui::TableSetupColumn("col", ImGuiTableColumnFlags_WidthFixed, 25.0f);
-      ImGui::TableSetupColumn("col1", ImGuiTableColumnFlags_WidthFixed, 25.0f);
-      ImGui::TableSetupColumn("col2", ImGuiTableColumnFlags_WidthFixed, 25.0f);
-      ImGui::TableSetupColumn("col3", ImGuiTableColumnFlags_WidthFixed, 25.0f);
-
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
 
