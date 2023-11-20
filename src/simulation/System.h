@@ -24,10 +24,10 @@ public:
   void Update(const ColorMatrix& matrix, float timestep);
   
   const std::vector<Particle>& GetParticles() const { return m_Particles; }
-  float SetNumParticles(std::size_t numParticles = 1000, std::size_t numColors = 1) { AllocateParticles(numParticles, numColors); }
+  void SetNumParticles(std::size_t numParticles = 1000, std::size_t numColors = 1) { AllocateParticles(numParticles, numColors); }
   
   float GetBoundingBoxSize() const { return m_Size; }
-  float SetBoundingBoxSize(float size) 
+  void SetBoundingBoxSize(float size) 
   { 
     m_Size = size; 
     BoundPositions(); 
@@ -35,7 +35,7 @@ public:
   }
 
   float GetInteractionRadius() const { return m_InteractionRadius; }
-  float SetInteractionRadius(float radius = 40.0f) { m_InteractionRadius = radius; AllocateCells(); }
+  void SetInteractionRadius(float radius = 40.0f) { m_InteractionRadius = radius; AllocateCells(); }
   
 private:
   void AllocateParticles(std::size_t numParticles, std::size_t numColors);
