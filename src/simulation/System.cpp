@@ -10,27 +10,7 @@ System::System(std::size_t numParticles, std::size_t numColors, float size)
 	: m_Size(size)
 {
   AllocateCells();
-  
-  // Particles
-  m_Particles.reserve(numParticles);
-  for (std::size_t i = 0; i < numParticles; i++)
-  {
-    Particle p;
-    p.ID = i;
-
-    float x = glm::linearRand(-size, size);
-    float y = glm::linearRand(-size, size);
-    p.Position = { x, y };
-    
-    float speed = 15.0f;
-    p.Velocity = glm::circularRand(speed);
-
-    p.NetForce = { 0.0f, 0.0f };
-
-    p.Color = i % numColors;
-
-    m_Particles.push_back(p);
-  }
+  AllocateParticles(numParticles, numColors);
 }
 
 void System::Update(const ColorMatrix& matrix, float timestep)
@@ -39,6 +19,41 @@ void System::Update(const ColorMatrix& matrix, float timestep)
   CalculateForces(matrix);
   UpdatePositions(timestep);
   BoundPositions();
+}
+
+void System::AllocateParticles(std::size_t numParticles, std::size_t numColors)
+{
+  // If we are removing particles
+  std::size_t currentParticles = m_Particles.size();
+  if (currentParticles >= numParticles)
+  {
+    m_Particles.resize(numParticles);
+    return;
+  }
+
+  // Allocate space for our particles
+  m_Particles.reserve(numParticles);
+
+  // Iteratively create our particles
+  for (std::size_t i = currentParticles; i < numParticles; i++)
+  {
+    Particle p;
+    p.ID = i;
+
+    // Uniform Random Distribution
+    float x = glm::linearRand(-m_Size, m_Size);
+    float y = glm::linearRand(-m_Size, m_Size);
+    p.Position = {x, y};
+
+    float speed = 15.0f;
+    p.Velocity = glm::circularRand(speed);
+
+    p.NetForce = {0.0f, 0.0f};
+
+    p.Color = i % numColors;
+
+    m_Particles.push_back(p);
+  }
 }
 
 void System::AllocateCells()
@@ -130,7 +145,11 @@ void System::CalculateForces(const ColorMatrix& matrix)
   };
   
   // If we have less than 100 particles, the overhead isn't needed, and it's hard to distrubute particles anyways
-  if (m_Particles.size() < 100)
+  if (m_Particles.size() == 0)
+  {
+    return;
+  }
+  else if (m_Particles.size() < 100)
   {
     jobFunc(0, m_Particles.size() - 1);
   }
@@ -194,6 +213,10 @@ glm::vec2 System::ForceFunction(const Particle& particle, const Particle& other,
   
   float distance = glm::length(delta);
   
+  // An interesting consequence of non-inverse-square law repulsion 
+  // is that it minimizes potential energy to create pockets instead of uniform particles.
+  // We may want a more physically accurate simulation in the future, that accounts for the
+  // total energy in the system.
   if (distance <= m_RepulsionRadius * m_InteractionRadius)
   {
     float forceStrength = (distance / m_RepulsionRadius - m_InteractionRadius);

@@ -25,6 +25,8 @@ private:
   void Shutdown();
 
   void PollEvents();
+
+  void DisplayUI(float timestep);
   
 private:
   bool m_Running = false;
@@ -33,7 +35,9 @@ private:
   Renderer* m_Renderer = nullptr;
   ImGuiRenderer* m_UIRenderer = nullptr;
   Camera* m_Camera = nullptr;
+
   System* m_System = nullptr;
+  bool m_UpdateSystem = true;
   ColorMatrix m_ColorMatrix;
 
   SDL_Window* m_Window = nullptr;

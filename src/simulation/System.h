@@ -19,17 +19,26 @@ struct Cell
 class System
 {
 public:
-  System(std::size_t numParticles = 10000, std::size_t numColors = 1, float size = 100.0f);
+  System(std::size_t numParticles = 1000, std::size_t numColors = 1, float size = 100.0f);
   
   void Update(const ColorMatrix& matrix, float timestep);
   
   const std::vector<Particle>& GetParticles() const { return m_Particles; }
+  float SetNumParticles(std::size_t numParticles = 1000, std::size_t numColors = 1) { AllocateParticles(numParticles, numColors); }
+  
   float GetBoundingBoxSize() const { return m_Size; }
+  float SetBoundingBoxSize(float size) 
+  { 
+    m_Size = size; 
+    BoundPositions(); 
+    AllocateCells();
+  }
+
   float GetInteractionRadius() const { return m_InteractionRadius; }
-
   float SetInteractionRadius(float radius = 40.0f) { m_InteractionRadius = radius; AllocateCells(); }
-
+  
 private:
+  void AllocateParticles(std::size_t numParticles, std::size_t numColors);
   void AllocateCells();
   void PartitionsParticles();
   void CalculateForces(const ColorMatrix& matrix);

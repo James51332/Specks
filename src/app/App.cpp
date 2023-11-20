@@ -52,13 +52,9 @@ void App::Run()
     lastTime = curTime;
 
     // Update simulation
-    static bool updateSim = true;
-    if (Input::KeyPress(SDL_SCANCODE_SPACE)) updateSim = !updateSim;
-    
-    if (updateSim)
-    {
+    if (Input::KeyPress(SDL_SCANCODE_SPACE)) m_UpdateSystem = !m_UpdateSystem;
+    if (m_UpdateSystem)
   		m_System->Update(m_ColorMatrix, timestep);
-    }
     
     // Update the camera system
     m_Camera->Update(timestep);
@@ -72,31 +68,8 @@ void App::Run()
     m_Renderer->DrawParticles(m_System->GetParticles(), m_ColorMatrix);
     m_Renderer->EndFrame();
 
-    // Render our UI
-    m_UIRenderer->Begin();
-    ImGui::Begin("Settings");
-    {
-      // Color Matrix UI
-      ImGui::SeparatorText("Color Matrix");
-      UI::DisplayColorMatrix(m_ColorMatrix);
+    DisplayUI(timestep);
 
-      // Simulation Settings UI
-      ImGui::SeparatorText("Simulation");
-      
-      ImGui::Text("Debug Info");
-      ImGui::Text("Frame Time: %.2fms", timestepMilliseconds);
-
-      ImGui::Spacing();
-
-      if (ImGui::Button("Play/Pause (Space)")) updateSim = !updateSim;
-      
-      float interactionRadius = m_System->GetInteractionRadius();
-      if (ImGui::SliderFloat("Interaction Radius", &interactionRadius, 5.0f, 50.0f, "%.1f"))
-        m_System->SetInteractionRadius(interactionRadius);
-    }
-    ImGui::End();
-    m_UIRenderer->End();
-    
     SDL_GL_SwapWindow(m_Window);
   }
 
@@ -126,15 +99,19 @@ void App::Init(int w, int h)
   float displayScale = SDL_GetWindowDisplayScale(m_Window);
   m_Renderer = new Renderer(static_cast<float>(w), static_cast<float>(h), displayScale);
   m_UIRenderer = new ImGuiRenderer(static_cast<float>(w), static_cast<float>(h), displayScale);
-  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 550.0f);
+  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 75.0f);
   
   // Initialize the input manager
   Input::Init();
   
   // Setup the particle system
-  m_System = new System(400, 1, 100.0f);
-  m_ColorMatrix = ColorMatrix(1);
-  m_ColorMatrix.SetColor(0, glm::vec4(1.0f));
+  m_System = new System(100, 5, 50.0f);
+  m_ColorMatrix = ColorMatrix(5);
+  m_ColorMatrix.SetColor(0, {1.0f, 1.0f, 0.0f, 1.0f});
+  m_ColorMatrix.SetColor(1, {0.0f, 1.0f, 1.0f, 1.0f});
+  m_ColorMatrix.SetColor(2, {1.0f, 0.0f, 1.0f, 1.0f});
+  m_ColorMatrix.SetColor(3, {0.5f, 1.0f, 0.8f, 1.0f});
+  m_ColorMatrix.SetColor(4, {0.8f, 0.2f, 0.5f, 1.0f});
 }
 
 void App::Shutdown()
@@ -215,6 +192,47 @@ void App::PollEvents()
       default: break;
     }
   }
+}
+
+void App::DisplayUI(float timestep)
+{
+  m_UIRenderer->Begin();
+  ImGui::Begin("Settings");
+  {
+    // Color Matrix UI
+    ImGui::SeparatorText("Color Matrix");
+    {
+      UI::DisplayColorMatrix(m_ColorMatrix);
+    }
+
+    // Simulation Settings UI
+    ImGui::SeparatorText("Simulation");
+    ImGui::PushItemWidth(ImGui::GetFontSize() * -12); // Ensure labels fit in window
+    {
+      if (ImGui::Button("Play/Pause (Space)")) m_UpdateSystem = !m_UpdateSystem;
+
+      float interactionRadius = m_System->GetInteractionRadius();
+      if (ImGui::SliderFloat("Interaction Radius", &interactionRadius, 5.0f, 50.0f, "%.1f"))
+        m_System->SetInteractionRadius(interactionRadius);
+
+      float boundingSize = m_System->GetBoundingBoxSize();
+      if (ImGui::SliderFloat("Simulation Size", &boundingSize, interactionRadius, 500.0f, "%.1f"))
+        m_System->SetBoundingBoxSize(boundingSize);
+
+      int numParticles = static_cast<int>(m_System->GetParticles().size());
+      if (ImGui::InputInt("Number of Particles", &numParticles))
+        m_System->SetNumParticles(static_cast<std::size_t>(numParticles), m_ColorMatrix.GetNumColors());
+    }
+    ImGui::PopItemWidth();
+
+    // Debug Info
+    ImGui::SeparatorText("Debug Info");
+    {
+      ImGui::Text("Frame Time: %.2fms", timestep * 1000.0f);
+    }
+  }
+  ImGui::End();
+  m_UIRenderer->End();
 }
 
 }
