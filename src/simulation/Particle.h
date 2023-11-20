@@ -5,6 +5,8 @@
 namespace Speck
 {
 
+// TODO: Switch to full Verlet integration. 
+// It hasn't shown useful to maintain velocity as opposed to previous position
 struct Particle
 {
   glm::vec2 Position = glm::vec2(0.0f);

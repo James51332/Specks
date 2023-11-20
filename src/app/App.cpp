@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #include <imgui.h>
 #include <chrono>
+#include <glm/gtc/random.hpp>
 
 #include "app/Input.h"
 #include "ui/UIInput.h"
@@ -203,6 +204,24 @@ void App::DisplayUI(float timestep)
     ImGui::SeparatorText("Color Matrix");
     {
       UI::DisplayColorMatrix(m_ColorMatrix);
+
+      ImGui::SameLine();
+      if (ImGui::Button("Randomize"))
+      {
+        std::size_t numColors = m_ColorMatrix.GetNumColors();
+        for (std::size_t i = 0; i < numColors; i++)
+        {
+          for (std::size_t j = 0; j < numColors; j++)
+          {
+            m_ColorMatrix.SetAttractionScale(i, j, glm::linearRand(-1.0f, 1.0f));
+          }
+        }
+      }
+
+      //if (ImGui::Button("Make Symmetric", &symmetric))
+      {
+
+      }
     }
 
     // Simulation Settings UI

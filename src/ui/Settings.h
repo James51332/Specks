@@ -12,23 +12,6 @@ namespace Speck::UI
 void DisplayColorMatrix(ColorMatrix& matrix)
 {
   std::size_t colors = matrix.GetNumColors();
-  
-  // Descriptor Info
-  ImGui::BeginGroup();
-  {
-    ImGui::Text("Color Matrix");
-    if (ImGui::BeginItemTooltip())
-    {
-      ImGui::TextWrapped("The color matrix defines attractions of each type of particles. The row indicates each color, each of the columns is one of its attraction factors.");
-      ImGui::EndTooltip();
-    }
-
-    bool b = false;
-    ImGui::Checkbox("Symmetric", &b);
-  }
-  ImGui::EndGroup();
-
-  ImGui::SameLine();
   if (ImGui::BeginTable("color_matrix", colors + 1, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingFixedSame))
   {
     // Matrix Headers
@@ -65,7 +48,9 @@ void DisplayColorMatrix(ColorMatrix& matrix)
           col = glm::vec4(-scale, 0.0f, 0.0f, 1.0f);
 
         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, {0.0f, 0.0f});
-        UI::Square(16.0f, ImGui::GetColorU32({col.r, col.g, col.b, col.a}));
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.0f);
+        UI::Square(ImGui::GetColumnWidth(), ImGui::GetColorU32({col.r, col.g, col.b, col.a}));
+        ImGui::PopStyleVar();
         ImGui::PopStyleVar();
 
         // Convert Scale to a Color
