@@ -100,13 +100,13 @@ void App::Init(int w, int h)
   float displayScale = SDL_GetWindowDisplayScale(m_Window);
   m_Renderer = new Renderer(static_cast<float>(w), static_cast<float>(h), displayScale);
   m_UIRenderer = new ImGuiRenderer(static_cast<float>(w), static_cast<float>(h), displayScale);
-  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 75.0f);
+  m_Camera = new Camera(static_cast<float>(w), static_cast<float>(h), 70.0f);
   
   // Initialize the input manager
   Input::Init();
   
   // Setup the particle system
-  m_System = new System(100, 5, 50.0f);
+  m_System = new System(500, 5, 100.0f);
   m_ColorMatrix = ColorMatrix(5);
   m_ColorMatrix.SetColor(0, {1.0f, 1.0f, 0.0f, 1.0f});
   m_ColorMatrix.SetColor(1, {0.0f, 1.0f, 1.0f, 1.0f});
@@ -217,11 +217,6 @@ void App::DisplayUI(float timestep)
           }
         }
       }
-
-      //if (ImGui::Button("Make Symmetric", &symmetric))
-      {
-
-      }
     }
 
     // Simulation Settings UI
@@ -231,14 +226,13 @@ void App::DisplayUI(float timestep)
       if (ImGui::Button("Play/Pause (Space)")) m_UpdateSystem = !m_UpdateSystem;
 
       float interactionRadius = m_System->GetInteractionRadius();
-      if (ImGui::SliderFloat("Interaction Radius", &interactionRadius, 5.0f, 50.0f, "%.1f"))
-        m_System->SetInteractionRadius(interactionRadius);
-
       float boundingSize = m_System->GetBoundingBoxSize();
+      int numParticles = static_cast<int>(m_System->GetParticles().size());
+
+      if (ImGui::SliderFloat("Interaction Radius", &interactionRadius, 5.0f, boundingSize / 2.0f, "%.1f"))
+        m_System->SetInteractionRadius(interactionRadius);
       if (ImGui::SliderFloat("Simulation Size", &boundingSize, interactionRadius, 500.0f, "%.1f"))
         m_System->SetBoundingBoxSize(boundingSize);
-
-      int numParticles = static_cast<int>(m_System->GetParticles().size());
       if (ImGui::InputInt("Number of Particles", &numParticles))
         m_System->SetNumParticles(static_cast<std::size_t>(numParticles), m_ColorMatrix.GetNumColors());
     }
@@ -248,6 +242,14 @@ void App::DisplayUI(float timestep)
     ImGui::SeparatorText("Debug Info");
     {
       ImGui::Text("Frame Time: %.2fms", timestep * 1000.0f);
+    }
+
+    // Engine Settings
+    ImGui::SeparatorText("Engine");
+    {
+      bool threaded = m_System->IsMultiThreaded();
+      if (ImGui::Checkbox("Multithreaded", &threaded))
+        m_System->SetMultiThreaded(threaded);
     }
   }
   ImGui::End();

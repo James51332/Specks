@@ -37,11 +37,14 @@ public:
   float GetInteractionRadius() const { return m_InteractionRadius; }
   void SetInteractionRadius(float radius = 40.0f) { m_InteractionRadius = radius; AllocateCells(); }
   
+  bool IsMultiThreaded() const { return m_ThreadedDispatch; }
+  void SetMultiThreaded(bool threaded = true) { m_ThreadedDispatch = threaded; }
+
 private:
   void AllocateParticles(std::size_t numParticles, std::size_t numColors);
   void AllocateCells();
   void PartitionsParticles();
-  void CalculateForces(const ColorMatrix& matrix);
+  void CalculateForces(const ColorMatrix& matrix, float timestep);
   void UpdatePositions(float timestep);
   void BoundPositions();
   
@@ -64,6 +67,9 @@ private:
   // Size of the bounding box at which point particles will wrap around.
   // Goes from -m_Size to m_Size on both x and y axes.
   float m_Size;
+
+  // ----- Engine Details -----
+  bool m_ThreadedDispatch = true;
 };
 
 }

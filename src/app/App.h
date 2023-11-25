@@ -37,7 +37,7 @@ private:
   Camera* m_Camera = nullptr;
 
   System* m_System = nullptr;
-  bool m_UpdateSystem = true;
+  bool m_UpdateSystem = false;
   ColorMatrix m_ColorMatrix;
 
   SDL_Window* m_Window = nullptr;

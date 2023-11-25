@@ -2,6 +2,7 @@
 
 #include <glm/gtc/random.hpp>
 #include <thread>
+#include <SDL.h>
 
 namespace Speck
 {
@@ -16,7 +17,7 @@ System::System(std::size_t numParticles, std::size_t numColors, float size)
 void System::Update(const ColorMatrix& matrix, float timestep)
 {
   PartitionsParticles();
-  CalculateForces(matrix);
+  CalculateForces(matrix, timestep); // Timestep needed for velocity-based friction
   UpdatePositions(timestep);
   BoundPositions();
 }
@@ -44,9 +45,7 @@ void System::AllocateParticles(std::size_t numParticles, std::size_t numColors)
     float x = glm::linearRand(-m_Size, m_Size);
     float y = glm::linearRand(-m_Size, m_Size);
     p.Position = {x, y};
-
-    float speed = 15.0f;
-    p.Velocity = glm::circularRand(speed);
+    p.LastPosition = p.Position;
 
     p.NetForce = {0.0f, 0.0f};
 
@@ -89,16 +88,19 @@ void System::PartitionsParticles()
   }
 }
 
-void System::CalculateForces(const ColorMatrix& matrix)
+void System::CalculateForces(const ColorMatrix& matrix, float timestep)
 {
   // Thread Job Function (We only write to our specified particle[i].netforce and never read it, so there's no need for locks)
-  auto jobFunc = [&](std::size_t start, std::size_t end)
+  auto jobFunc = [&](std::size_t start, std::size_t end, float timestep)
   {
     for (std::size_t i = start; i <= end; i++)
     {
       Particle& particle = m_Particles[i];
-      particle.NetForce = - particle.Velocity * m_FrictionStrength;
-      
+
+      // Friction
+      glm::vec2 velocity = (particle.Position - particle.LastPosition) / timestep;
+      particle.NetForce = -velocity * m_FrictionStrength;
+
       // Create a list of neighboring cells
       constexpr std::size_t numNeighbors = 9;
       std::size_t neighbors[numNeighbors];
@@ -149,9 +151,9 @@ void System::CalculateForces(const ColorMatrix& matrix)
   {
     return;
   }
-  else if (m_Particles.size() < 100)
+  else if (m_Particles.size() < 100 || !m_ThreadedDispatch)
   {
-    jobFunc(0, m_Particles.size() - 1);
+    jobFunc(0, m_Particles.size() - 1, timestep);
   }
   else
   {
@@ -166,7 +168,7 @@ void System::CalculateForces(const ColorMatrix& matrix)
       std::size_t end = start + (particlesPerWorker - 1);
       end = (end >= m_Particles.size()) ? m_Particles.size() - 1 : end; // cap end at last particle.
 
-      workers[i] = std::thread(jobFunc, start, end);
+      workers[i] = std::thread(jobFunc, start, end, timestep);
     }
 
     // Wait for our workers
@@ -179,12 +181,16 @@ void System::CalculateForces(const ColorMatrix& matrix)
 
 void System::UpdatePositions(float timestep)
 {
-  // Update Position (We use a modified version of velocity verlet to integrate)
+  // Update Position
   for (std::size_t i = 0; i < m_Particles.size(); i++)
   {
     Particle& particle = m_Particles[i];
-    particle.Position += (particle.Velocity + particle.NetForce * timestep) * timestep;
-    particle.Velocity += particle.NetForce * timestep;
+
+    glm::vec2 acceleration = particle.NetForce; // All particles have equal mass right now
+    glm::vec2 newPos = 2.0f * particle.Position - particle.LastPosition + acceleration * timestep * timestep; // Verlet integration
+
+    particle.LastPosition = particle.Position;
+    particle.Position = newPos;
   }
 }
 
@@ -193,12 +199,36 @@ void System::BoundPositions()
   for (std::size_t i = 0; i < m_Particles.size(); i++)
   {
     glm::vec2& position = m_Particles[i].Position;
+    glm::vec2& lastPosition = m_Particles[i].LastPosition;
+    glm::vec2 delta = position - lastPosition;
 
     // We force them to move to edge because velocity can get out of hand when paused for long time.
-    if (position.x > m_Size) position.x = -m_Size;
-    if (position.x < -m_Size) position.x = m_Size;
-    if (position.y > m_Size) position.y = -m_Size;
-    if (position.y < -m_Size) position.y = m_Size;
+    bool update = false;
+    if (position.x > m_Size) 
+    {
+      position.x = -m_Size;
+      update = true;
+    }
+    else if (position.x < -m_Size) 
+    {
+      position.x = m_Size;
+      update = true;
+    }
+    if (position.y > m_Size) 
+    {
+      position.y = -m_Size;
+      update = true;
+    }
+    else if (position.y < -m_Size) 
+    {
+      position.y = m_Size;
+      update = true;
+    }   
+
+    if (update)
+    {
+      lastPosition = position - delta; // Maintain velocity
+    }
   }
 }
 
@@ -236,6 +266,5 @@ glm::vec2 System::ForceFunction(const Particle& particle, const Particle& other,
     return { 0.0f, 0.0f };
   }
 }
-
 
 }
