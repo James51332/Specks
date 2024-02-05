@@ -1,3 +1,4 @@
 [submodule "vendor/vision"]
 	path = vendor/vision
 	url = https://github.com/James51332/Vision
+	branch = origin
