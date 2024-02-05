@@ -2,7 +2,7 @@
 
 int main()
 {
-  Speck::App* app = new Speck::App("Specks");
+  Speck::Specks* app = new Speck::Specks();
   app->Run();
   delete app;
 }

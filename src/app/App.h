@@ -1,47 +1,37 @@
 #pragma once
 
-#include <string>
-#include <SDL.h>
+#include "core/App.h"
 
-#include "renderer/Renderer.h"
+#include "ui/ImGuiRenderer.h"
+
+#include "ParticleRenderer.h"
 #include "simulation/System.h"
 #include "simulation/ColorMatrix.h"
-#include "ui/ImGuiRenderer.h"
+
 
 namespace Speck
 {
 
-class App
+class Specks : public Vision::App
 {
 public:
-  App(const std::string& name);
-  ~App();
+  Specks();
+  ~Specks();
 
-  void Stop();
-  void Run();
+  void OnUpdate(float timestep);
+  void OnResize();
 
 private:
-  void Init(int w = 1280, int h = 720);
-  void Shutdown();
-
-  void PollEvents();
-
   void DisplayUI(float timestep);
   
 private:
-  bool m_Running = false;
-  std::string m_Name;
-
-  Renderer* m_Renderer = nullptr;
-  ImGuiRenderer* m_UIRenderer = nullptr;
-  Camera* m_Camera = nullptr;
+  ParticleRenderer* m_Renderer = nullptr;
+  Vision::OrthoCamera* m_Camera = nullptr;
+  Vision::ImGuiRenderer* m_UIRenderer = nullptr;
 
   System* m_System = nullptr;
   bool m_UpdateSystem = false;
   ColorMatrix m_ColorMatrix;
-
-  SDL_Window* m_Window = nullptr;
-  SDL_GLContext m_Context = nullptr;
 };
 
 }

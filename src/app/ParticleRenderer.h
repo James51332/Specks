@@ -3,10 +3,10 @@
 #include <vector>
 #include <glad/glad.h>
 
-#include "Camera.h"
-#include "Shader.h"
-#include "Buffer.h"
-#include "VertexArray.h"
+#include "renderer/Camera.h"
+#include "renderer/Shader.h"
+#include "renderer/Buffer.h"
+#include "renderer/VertexArray.h"
 
 #include "simulation/Particle.h"
 #include "simulation/ColorMatrix.h"
@@ -14,13 +14,13 @@
 namespace Speck
 {
 
-class Renderer
+class ParticleRenderer
 {
 public:
-  Renderer(float width, float height, float displayScale = 1.0f);
-  ~Renderer();
+  ParticleRenderer(float width, float height, float displayScale = 1.0f);
+  ~ParticleRenderer();
   
-  void BeginFrame(Camera* camera, float boundingBoxSize);
+  void BeginFrame(Vision::OrthoCamera* camera, float boundingBoxSize);
   void EndFrame();
   
   void DrawParticle(const Particle& particle, const ColorMatrix& matrix);
@@ -41,9 +41,9 @@ private:
 
 private:
   // General Rendering Data
-  VertexArray *m_ParticleVAO, *m_BackgroundVAO;
-  Buffer *m_QuadVBO, *m_QuadIBO;
-  Shader *m_ParticleShader, *m_BackgroundShader;
+  Vision::VertexArray *m_ParticleVAO, *m_BackgroundVAO;
+  Vision::Buffer *m_QuadVBO, *m_QuadIBO;
+  Vision::Shader *m_ParticleShader, *m_BackgroundShader;
   
   // Particle Instancing Data
   struct InstancedVertex
@@ -52,13 +52,13 @@ private:
     glm::vec4 Color;
   };
   
-  Buffer* m_InstancedVBO;
+  Vision::Buffer* m_InstancedVBO;
   InstancedVertex* m_InstancedBuffer;
   std::size_t m_Particles = 0, m_MaxParticles = 10000;
   
   // General Rendering Data
   bool m_InFrame = false;
-  Camera* m_Camera = nullptr;
+  Vision::OrthoCamera* m_Camera = nullptr;
   float m_PixelDensity = 1.0f;
   float m_Width, m_Height;
 };

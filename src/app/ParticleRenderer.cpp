@@ -1,7 +1,5 @@
-#include "Renderer.h"
+#include "ParticleRenderer.h"
 
-#include <SDL.h>
-#include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Speck
@@ -91,12 +89,9 @@ void main()
 	FragColor = vec4(0.1, 0.1, 0.1, 1.0);
 })";
 
-Renderer::Renderer(float width, float height, float displayScale)
+ParticleRenderer::ParticleRenderer(float width, float height, float displayScale)
   : m_Width(width), m_Height(height), m_PixelDensity(displayScale)
 {
-  // Load OpenGL function pointers
-  gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
-
   // Init OpenGL objects
   GenerateBuffers();
   GenerateArrays();
@@ -110,7 +105,7 @@ Renderer::Renderer(float width, float height, float displayScale)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-Renderer::~Renderer()
+ParticleRenderer::~ParticleRenderer()
 {
   // Destroy rendering objects
   DestroyBuffers();
@@ -118,7 +113,7 @@ Renderer::~Renderer()
   DestroyShaders();
 }
 
-void Renderer::BeginFrame(Camera* camera, float systemBoundSize)
+void ParticleRenderer::BeginFrame(Vision::OrthoCamera* camera, float systemBoundSize)
 {
   m_InFrame = true;
   m_Camera = camera;
@@ -134,7 +129,7 @@ void Renderer::BeginFrame(Camera* camera, float systemBoundSize)
   glDrawElements(GL_TRIANGLES, sizeof(quadIndices) / sizeof(quadIndices[0]), GL_UNSIGNED_SHORT, nullptr);
 }
 
-void Renderer::DrawParticle(const Particle& particle, const ColorMatrix& matrix)
+void ParticleRenderer::DrawParticle(const Particle& particle, const ColorMatrix& matrix)
 {
   if (m_Particles == m_MaxParticles)
     Flush();
@@ -143,7 +138,7 @@ void Renderer::DrawParticle(const Particle& particle, const ColorMatrix& matrix)
   m_Particles++;
 }
 
-void Renderer::DrawParticles(const std::vector<Particle>& particles, const ColorMatrix& matrix)
+void ParticleRenderer::DrawParticles(const std::vector<Particle>& particles, const ColorMatrix& matrix)
 {
   std::size_t num = particles.size();
   if (m_Particles + num >= m_MaxParticles)
@@ -172,7 +167,7 @@ void Renderer::DrawParticles(const std::vector<Particle>& particles, const Color
   }
 }
 
-void Renderer::EndFrame()
+void ParticleRenderer::EndFrame()
 {
   Flush();
   
@@ -180,7 +175,7 @@ void Renderer::EndFrame()
   m_Camera = nullptr;
 }
 
-void Renderer::Flush()
+void ParticleRenderer::Flush()
 {
   // Upload the camera matrix and use the shader program
   m_ParticleShader->Use();
@@ -198,7 +193,7 @@ void Renderer::Flush()
   m_Particles = 0;
 }
 
-void Renderer::Resize(float width, float height)
+void ParticleRenderer::Resize(float width, float height)
 {
   m_Width = width;
   m_Height = height;
@@ -206,69 +201,69 @@ void Renderer::Resize(float width, float height)
   glViewport(0, 0, static_cast<GLsizei>(width * m_PixelDensity), static_cast<GLsizei>(height * m_PixelDensity));
 }
 
-void Renderer::GenerateBuffers()
+void ParticleRenderer::GenerateBuffers()
 {
   // Create our quad vertex buffer and index buffer
   {
-    BufferDesc vboDesc;
+    Vision::BufferDesc vboDesc;
     vboDesc.Type = GL_ARRAY_BUFFER;
     vboDesc.Usage = GL_STATIC_DRAW;
     vboDesc.Size = sizeof(quadVertices);
     vboDesc.Data = (void*)quadVertices;
     vboDesc.Layout = {
-      {ShaderDataType::Float3, "a_Position"},
-      {ShaderDataType::Float2, "a_UV"}
+      {Vision::ShaderDataType::Float3, "a_Position"},
+      {Vision::ShaderDataType::Float2, "a_UV"}
     };
 
-    m_QuadVBO = new Buffer(vboDesc);
+    m_QuadVBO = new Vision::Buffer(vboDesc);
 
-    BufferDesc iboDesc;
+    Vision::BufferDesc iboDesc;
     iboDesc.Type = GL_ELEMENT_ARRAY_BUFFER;
     iboDesc.Usage = GL_STATIC_DRAW;
     iboDesc.Size = sizeof(quadIndices);
     iboDesc.Data = (void*)quadIndices;
 
-    m_QuadIBO = new Buffer(iboDesc);
+    m_QuadIBO = new Vision::Buffer(iboDesc);
   }
 
   // Create our particle instance vertex buffers
   {
-    BufferDesc instancedDesc;
+    Vision::BufferDesc instancedDesc;
     instancedDesc.Type = GL_ARRAY_BUFFER;
     instancedDesc.Usage = GL_DYNAMIC_DRAW;
     instancedDesc.Size = m_MaxParticles * sizeof(InstancedVertex);
     instancedDesc.Data = nullptr;
     instancedDesc.Layout = {
-        {ShaderDataType::Float2, "a_InstancedPosition", false, 1},
-        {ShaderDataType::Float4, "a_InstancedColor", false, 1}
+        {Vision::ShaderDataType::Float2, "a_InstancedPosition", false, 1},
+        {Vision::ShaderDataType::Float4, "a_InstancedColor", false, 1}
     };
 
-    m_InstancedVBO = new Buffer(instancedDesc);
+    m_InstancedVBO = new Vision::Buffer(instancedDesc);
   	
   	// Allocate the cpu buffer that we'll write to and copy from
     m_InstancedBuffer = new InstancedVertex[m_MaxParticles];
 	}
 }
 
-void Renderer::GenerateArrays()
+void ParticleRenderer::GenerateArrays()
 {
   // Create our particle vertex array and attach buffers
-  m_ParticleVAO = new VertexArray();
+  m_ParticleVAO = new Vision::VertexArray();
   m_ParticleVAO->AttachBuffer(m_QuadVBO);
   m_ParticleVAO->AttachBuffer(m_InstancedVBO);
   
   // Create our background vertex array
-  m_BackgroundVAO = new VertexArray();
+  m_BackgroundVAO = new Vision::VertexArray();
   m_BackgroundVAO->AttachBuffer(m_QuadVBO);
 }
 
-void Renderer::GenerateShaders()
+void ParticleRenderer::GenerateShaders()
 {
-  m_ParticleShader = new Shader(particleVertex, particleFragment);
-  m_BackgroundShader = new Shader(backgroundVertex, backgroundFragment);
+  m_ParticleShader = new Vision::Shader(particleVertex, particleFragment);
+  m_BackgroundShader = new Vision::Shader(backgroundVertex, backgroundFragment);
 }
 
-void Renderer::DestroyBuffers()
+void ParticleRenderer::DestroyBuffers()
 {
   delete m_QuadVBO;
   delete m_QuadIBO;
@@ -276,13 +271,13 @@ void Renderer::DestroyBuffers()
   delete[] m_InstancedBuffer;
 }
 
-void Renderer::DestroyArrays()
+void ParticleRenderer::DestroyArrays()
 {
   delete m_ParticleVAO;
   delete m_BackgroundVAO;
 }
 
-void Renderer::DestroyShaders()
+void ParticleRenderer::DestroyShaders()
 {
   delete m_ParticleShader;
   delete m_BackgroundShader;
