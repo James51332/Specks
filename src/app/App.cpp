@@ -40,7 +40,16 @@ void Specks::OnUpdate(float timestep)
   // Update simulation
   if (Vision::Input::KeyPress(SDL_SCANCODE_SPACE)) m_UpdateSystem = !m_UpdateSystem;
   if (m_UpdateSystem)
-  	m_System->Update(m_ColorMatrix, timestep);
+  {
+    m_System->PartitionsParticles();
+
+    m_System->ZeroForces();
+    m_ColorForce.ApplyForces(m_System, m_ColorMatrix, timestep);
+    m_FrictionForce.ApplyForces(m_System, timestep);
+
+  	m_System->UpdatePositions(timestep);
+    m_System->WrapPositions();
+  }
   
   // Update the camera system
   m_Camera->Update(timestep);
@@ -116,9 +125,9 @@ void Specks::DisplayUI(float timestep)
     // Engine Settings
     ImGui::SeparatorText("Engine");
     {
-      bool threaded = m_System->IsMultiThreaded();
+      bool threaded = m_ColorForce.IsMultiThreaded();
       if (ImGui::Checkbox("Multithreaded", &threaded))
-        m_System->SetMultiThreaded(threaded);
+       m_ColorForce.SetMultiThreaded(threaded);
     }
   }
   ImGui::End();
