@@ -2,14 +2,14 @@
 
 #include "core/App.h"
 
+
+#include "renderer/Renderer2D.h"
 #include "ui/ImGuiRenderer.h"
 
-#include "ParticleRenderer.h"
 #include "simulation/System.h"
 #include "simulation/ColorMatrix.h"
 #include "simulation/ColorForce.h"
 #include "simulation/FrictionForce.h"
-
 
 namespace Speck
 {
@@ -28,8 +28,8 @@ private:
   
 private:
   // Rendering
-  ParticleRenderer* m_Renderer = nullptr;
-  Vision::OrthoCamera* m_Camera = nullptr;
+  Vision::Renderer2D* m_Renderer = nullptr;
+  Vision::PerspectiveCamera* m_Camera = nullptr;
   Vision::ImGuiRenderer* m_UIRenderer = nullptr;
 
   // Particle System

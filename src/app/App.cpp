@@ -12,9 +12,11 @@ namespace Speck
 Specks::Specks()
 {
   // Initialize the renderer
-  m_Renderer = new ::Speck::ParticleRenderer(m_DisplayWidth, m_DisplayHeight, m_DisplayScale);
+  m_Renderer = new Vision::Renderer2D(m_DisplayWidth, m_DisplayHeight, m_DisplayScale);
   m_UIRenderer = new Vision::ImGuiRenderer(m_DisplayWidth, m_DisplayHeight, m_DisplayScale);
-  m_Camera = new Vision::OrthoCamera(m_DisplayWidth, m_DisplayHeight, 70.0f);
+  m_Camera = new Vision::PerspectiveCamera(m_DisplayWidth, m_DisplayHeight, 1.0f, 1000.0f);
+  m_Camera->SetMoveSpeed(20.0f);
+  m_Camera->SetPosition({0.0f, 0.0f, 100.0f});
 
   // Setup the particle system
   m_System = new System(500, 5, 100.0f);
@@ -38,7 +40,7 @@ Specks::~Specks()
 void Specks::OnUpdate(float timestep)
 {
   // Update simulation
-  if (Vision::Input::KeyPress(SDL_SCANCODE_SPACE)) m_UpdateSystem = !m_UpdateSystem;
+  if (Vision::Input::KeyPress(SDL_SCANCODE_RETURN)) m_UpdateSystem = !m_UpdateSystem;
   if (m_UpdateSystem)
   {
     m_System->PartitionsParticles();
@@ -59,9 +61,18 @@ void Specks::OnUpdate(float timestep)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
   // Render our particles
-  m_Renderer->BeginFrame(m_Camera, m_System->GetBoundingBoxSize());
-  m_Renderer->DrawParticles(m_System->GetParticles(), m_ColorMatrix);
-  m_Renderer->EndFrame();
+  m_Renderer->Begin(m_Camera);
+
+  m_Renderer->DrawSquare({0.0f, 0.0f}, { 0.1f, 0.1f, 0.1f, 1.0f }, m_System->GetBoundingBoxSize());
+
+  std::vector<Particle>& particles = m_System->GetParticles();
+  for (std::size_t i = 0; i < particles.size(); ++i)
+  {
+    Particle& particle = particles[i];
+    m_Renderer->DrawPoint(particle.Position, m_ColorMatrix.GetColor(particle.Color), 1.0f);
+  }
+
+  m_Renderer->End();
   
   DisplayUI(timestep);
 }
@@ -101,7 +112,7 @@ void Specks::DisplayUI(float timestep)
     ImGui::SeparatorText("Simulation");
     ImGui::PushItemWidth(ImGui::GetFontSize() * -12); // Ensure labels fit in window
     {
-      if (ImGui::Button("Play/Pause (Space)")) m_UpdateSystem = !m_UpdateSystem;
+      if (ImGui::Button("Play/Pause (Enter)")) m_UpdateSystem = !m_UpdateSystem;
 
       float interactionRadius = m_System->GetInteractionRadius();
       float boundingSize = m_System->GetBoundingBoxSize();
